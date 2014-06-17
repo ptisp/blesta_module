@@ -446,48 +446,21 @@ class PTisp extends Module {
 	 * @see Module::getModule()
 	 * @see Module::getModuleRow()
 	 */
-	public function renewService($package, $service, $parent_package=null, $parent_service=null) {
+	public function renewService($domain, $years, $parent_package=null, $parent_service=null) {
 
-		$row = $this->getModuleRow($package->module_row);
-		$api = $this->getApi($row->meta->reseller_id, $row->meta->key, $row->meta->sandbox == "true");
-		
-		// Renew domain
-		if ($package->meta->type == "domain") {
-			$fields = $this->serviceFieldsToObject($service->fields);
-			
-			$response = $domains->details(array('order-id' => $fields->{'order-id'}, 'options' => array("OrderDetails")));
-			$this->processResponse($api, $response);
-			$order = $response->response();
-			
-			$vars = array(
-				'years' => 1,
-				'order-id' => $fields->{'order-id'},
-				'exp-date' => $order->endtime,
-				'invoice-option' => "NoInvoice"
-			);
-			
-			foreach ($package->pricing as $pricing) {
-				if ($pricing->id == $service->pricing_id) {
-					$vars['years'] = $pricing->term;
-					break;
-				}
-			}
-			
-			// Only process renewal if adding years today will add time to the expiry date
-			if (strtotime("+" . $vars['years'] . " years") > $order->endtime) {
-				$api->loadCommand("logicboxes_domains");
-				$domains = new LogicboxesDomains($api);
-				$response = $domains->renew($vars);
-				$this->processResponse($api, $response);
-			}
-		}
-		else {
-			#
-			# TODO: SSL Cert: Set cancelation date of service?
-			#
-		}
-		
-		return null;
+    $request = new RestRequest("https://api.ptisp.pt/domains/" . $domain . "/renew/" . $years, "POST");
+    $request->setUsername($username);
+    $request->setPassword($password);
+
+    $request->execute(array());
+    $result = json_decode($request->getResponseBody(), true);
+
+    if ($result["result"] != "ok") {
+      return false;
+    } 
+
+
+    return true;
 	}
 	
 	/**
@@ -584,7 +557,7 @@ class PTisp extends Module {
 		// Load the view into this object, so helpers can be automatically added to the view
 		$this->view = new View("manage", "default");
 		$this->view->base_uri = $this->base_uri;
-		$this->view->setDefaultView("components" . DS . "modules" . DS . "logicboxes" . DS);
+		$this->view->setDefaultView("components" . DS . "modules" . DS . "PTisp" . DS);
 		
 		// Load the helpers required for this view
 		Loader::loadHelpers($this, array("Form", "Html", "Widget"));
@@ -604,7 +577,7 @@ class PTisp extends Module {
 		// Load the view into this object, so helpers can be automatically added to the view
 		$this->view = new View("add_row", "default");
 		$this->view->base_uri = $this->base_uri;
-		$this->view->setDefaultView("components" . DS . "modules" . DS . "logicboxes" . DS);
+		$this->view->setDefaultView("components" . DS . "modules" . DS . "PTisp" . DS);
 		
 		// Load the helpers required for this view
 		Loader::loadHelpers($this, array("Form", "Html", "Widget"));
@@ -630,7 +603,7 @@ class PTisp extends Module {
 		// Load the view into this object, so helpers can be automatically added to the view
 		$this->view = new View("edit_row", "default");
 		$this->view->base_uri = $this->base_uri;
-		$this->view->setDefaultView("components" . DS . "modules" . DS . "logicboxes" . DS);
+		$this->view->setDefaultView("components" . DS . "modules" . DS . "PTisp" . DS);
 		
 		// Load the helpers required for this view
 		Loader::loadHelpers($this, array("Form", "Html", "Widget"));
@@ -959,7 +932,6 @@ class PTisp extends Module {
 	public function getAdminTabs($package) {
 		if ($package->meta->type == "domain") {
 			return array(
-				'tabWhois' => Language::_("PTisp.tab_whois.title", true),
 				'tabNameservers' => Language::_("PTisp.tab_nameservers.title", true),
 				'tabSettings' => Language::_("PTisp.tab_settings.title", true)
 			);
@@ -981,7 +953,6 @@ class PTisp extends Module {
 	public function getClientTabs($package) {
 		if ($package->meta->type == "domain") {
 			return array(
-				'tabClientWhois' => Language::_("PTisp.tab_whois.title", true),
 				'tabClientNameservers' => Language::_("PTisp.tab_nameservers.title", true),
 				'tabClientSettings' => Language::_("PTisp.tab_settings.title", true)
 			);
