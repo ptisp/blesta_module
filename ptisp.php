@@ -1,4 +1,7 @@
 <?php
+
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . "apis" . DIRECTORY_SEPARATOR . "RestRequest.inc.php";
+
 /**
  * Logicboxes Module
  *
@@ -8,16 +11,16 @@
  * @license http://www.blesta.com/license/ The Blesta License Agreement
  * @link http://www.blesta.com/ Blesta
  */
-class Logicboxes extends Module {
+class PTisp extends Module {
 	
 	/**
 	 * @var string The version of this module
 	 */
-	private static $version = "2.1.0";
+	private static $version = "1.0.0";
 	/**
 	 * @var string The authors of this module
 	 */
-	private static $authors = array(array('name'=>"Phillips Data, Inc.",'url'=>"http://www.blesta.com"));
+	private static $authors = array(array('name'=>"PTisp",'url'=>"https://www.ptisp.com"));
 
 	/**
 	 * Initializes the module
@@ -27,9 +30,9 @@ class Logicboxes extends Module {
 		Loader::loadComponents($this, array("Input"));
 		
 		// Load the language required by this module
-		Language::loadLang("logicboxes", null, dirname(__FILE__) . DS . "language" . DS);
+		Language::loadLang("ptisp", null, dirname(__FILE__) . DS . "language" . DS);
 		
-		Configure::load("logicboxes", dirname(__FILE__) . DS . "config" . DS);
+		Configure::load("ptisp", dirname(__FILE__) . DS . "config" . DS);
 	}
 
 	/**
@@ -38,7 +41,7 @@ class Logicboxes extends Module {
 	 * @return string The common name of this module
 	 */
 	public function getName() {
-		return Language::_("Logicboxes.name", true);
+		return Language::_("PTisp.name", true);
 	}
 	
 	/**
@@ -79,7 +82,7 @@ class Logicboxes extends Module {
 	 * @return string The noun used to refer to a module row
 	 */
 	public function moduleRowName() {
-		return Language::_("Logicboxes.module_row", true);
+		return Language::_("PTisp.module_row", true);
 	}
 	
 	/**
@@ -88,7 +91,7 @@ class Logicboxes extends Module {
 	 * @return string The noun used to refer to a module row in plural form
 	 */
 	public function moduleRowNamePlural() {
-		return Language::_("Logicboxes.module_row_plural", true);
+		return Language::_("PTisp.module_row_plural", true);
 	}
 	
 	/**
@@ -173,12 +176,12 @@ class Logicboxes extends Module {
 			$tld = $this->getTld($vars['domain-name'], true);
 		
 		if ($package->meta->type == "domain") {
-			$contact_fields = Configure::get("Logicboxes.contact_fields");
-			$customer_fields = Configure::get("Logicboxes.customer_fields");
+			$contact_fields = Configure::get("PTisp.contact_fields");
+			$customer_fields = Configure::get("PTisp.customer_fields");
 			$domain_field_basics = array('years' => true, 'ns' => true, 'customer-id' => true, 'reg-contact-id' => true, 'admin-contact-id' => true, 'tech-contact-id' => true, 'billing-contact-id' => true, 'invoice-option' => true, 'protect-privacy' => true);
-			$transfer_fields = array_merge(Configure::get("Logicboxes.transfer_fields"), $domain_field_basics);
-			$domain_fields = array_merge(Configure::get("Logicboxes.domain_fields"), $domain_field_basics);
-			$domain_contact_fields = (array)Configure::get("Logicboxes.contact_fields" . $tld);
+			$transfer_fields = array_merge(Configure::get("PTisp.transfer_fields"), $domain_field_basics);
+			$domain_fields = array_merge(Configure::get("PTisp.domain_fields"), $domain_field_basics);
+			$domain_contact_fields = (array)Configure::get("PTisp.contact_fields" . $tld);
 			
 			$input_fields = array_merge($contact_fields, $customer_fields, $transfer_fields, $domain_fields, $domain_field_basics, $domain_contact_fields);
 		}
@@ -723,20 +726,20 @@ class Logicboxes extends Module {
 		$fields = new ModuleFields();
 		
 		$types = array(
-			'domain' => Language::_("Logicboxes.package_fields.type_domain", true),
-			//'ssl' => Language::_("Logicboxes.package_fields.type_ssl", true)
+			'domain' => Language::_("PTisp.package_fields.type_domain", true),
+			//'ssl' => Language::_("PTisp.package_fields.type_ssl", true)
 		);
 		
 		// Set type of package
-		$type = $fields->label(Language::_("Logicboxes.package_fields.type", true), "logicboxes_type");
+		$type = $fields->label(Language::_("PTisp.package_fields.type", true), "logicboxes_type");
 		$type->attach($fields->fieldSelect("meta[type]", $types,
 			$this->Html->ifSet($vars->meta['type']), array('id'=>"logicboxes_type")));
 		$fields->setField($type);	
 		
 		// Set all TLD checkboxes
-        $tld_options = $fields->label(Language::_("Logicboxes.package_fields.tld_options", true));
+        $tld_options = $fields->label(Language::_("PTisp.package_fields.tld_options", true));
 		
-		$tlds = Configure::get("Logicboxes.tlds");
+		$tlds = Configure::get("PTisp.tlds");
 		sort($tlds);
 		foreach ($tlds as $tld) {
 			$tld_label = $fields->label($tld, "tld_" . $tld);
@@ -746,7 +749,7 @@ class Logicboxes extends Module {
 		
 		// Set nameservers
 		for ($i=1; $i<=5; $i++) {
-			$type = $fields->label(Language::_("Logicboxes.package_fields.ns" . $i, true), "logicboxes_ns" . $i);
+			$type = $fields->label(Language::_("PTisp.package_fields.ns" . $i, true), "logicboxes_ns" . $i);
 			$type->attach($fields->fieldText("meta[ns][]",
 				$this->Html->ifSet($vars->meta['ns'][$i-1]), array('id'=>"logicboxes_ns" . $i)));
 			$fields->setField($type);
@@ -816,18 +819,18 @@ class Logicboxes extends Module {
 		
 			// Handle transfer request
 			if (isset($vars->transfer) || isset($vars->{'auth-code'})) {
-				return $this->arrayToModuleFields(Configure::get("Logicboxes.transfer_fields"), null, $vars);
+				return $this->arrayToModuleFields(Configure::get("PTisp.transfer_fields"), null, $vars);
 			}
 			// Handle domain registration
 			else {
 				
-				$module_fields = $this->arrayToModuleFields(array_merge(Configure::get("Logicboxes.domain_fields"), Configure::get("Logicboxes.nameserver_fields")), null, $vars);
+				$module_fields = $this->arrayToModuleFields(array_merge(Configure::get("PTisp.domain_fields"), Configure::get("PTisp.nameserver_fields")), null, $vars);
 				
 				if (isset($vars->{'domain-name'})) {
 					$tld = $this->getTld($vars->{'domain-name'});
 					
 					if ($tld) {
-						$extension_fields = array_merge((array)Configure::get("Logicboxes.domain_fields" . $tld), (array)Configure::get("Logicboxes.contact_fields" . $tld));
+						$extension_fields = array_merge((array)Configure::get("PTisp.domain_fields" . $tld), (array)Configure::get("PTisp.contact_fields" . $tld));
 						if ($extension_fields)
 							$module_fields = $this->arrayToModuleFields($extension_fields, $module_fields, $vars);
 					}
@@ -868,7 +871,7 @@ class Logicboxes extends Module {
 			
 			// Handle transfer request
 			if (isset($vars->transfer) || isset($vars->{'auth-code'})) {
-				$fields = Configure::get("Logicboxes.transfer_fields");
+				$fields = Configure::get("PTisp.transfer_fields");
 				
 				// We should already have the domain name don't make editable
 				$fields['domain-name']['type'] = "hidden";
@@ -876,7 +879,7 @@ class Logicboxes extends Module {
 				
 				$module_fields = $this->arrayToModuleFields($fields, null, $vars);
 				
-				$extension_fields = Configure::get("Logicboxes.contact_fields" . $tld);
+				$extension_fields = Configure::get("PTisp.contact_fields" . $tld);
 				if ($extension_fields)
 					$module_fields = $this->arrayToModuleFields($extension_fields, $module_fields, $vars);
 					
@@ -884,7 +887,7 @@ class Logicboxes extends Module {
 			}
 			// Handle domain registration
 			else {
-				$fields = array_merge(Configure::get("Logicboxes.nameserver_fields"), Configure::get("Logicboxes.domain_fields"));
+				$fields = array_merge(Configure::get("PTisp.nameserver_fields"), Configure::get("PTisp.domain_fields"));
 				
 				// We should already have the domain name don't make editable
 				$fields['domain-name']['type'] = "hidden";
@@ -893,7 +896,7 @@ class Logicboxes extends Module {
 				$module_fields = $this->arrayToModuleFields($fields, null, $vars);
 				
 				if (isset($vars->{'domain-name'})) {
-					$extension_fields = array_merge((array)Configure::get("Logicboxes.domain_fields" . $tld), (array)Configure::get("Logicboxes.contact_fields" . $tld));
+					$extension_fields = array_merge((array)Configure::get("PTisp.domain_fields" . $tld), (array)Configure::get("PTisp.contact_fields" . $tld));
 					if ($extension_fields)
 						$module_fields = $this->arrayToModuleFields($extension_fields, $module_fields, $vars);
 				}
@@ -956,9 +959,9 @@ class Logicboxes extends Module {
 	public function getAdminTabs($package) {
 		if ($package->meta->type == "domain") {
 			return array(
-				'tabWhois' => Language::_("Logicboxes.tab_whois.title", true),
-				'tabNameservers' => Language::_("Logicboxes.tab_nameservers.title", true),
-				'tabSettings' => Language::_("Logicboxes.tab_settings.title", true)
+				'tabWhois' => Language::_("PTisp.tab_whois.title", true),
+				'tabNameservers' => Language::_("PTisp.tab_nameservers.title", true),
+				'tabSettings' => Language::_("PTisp.tab_settings.title", true)
 			);
 		}
 		else {
@@ -978,9 +981,9 @@ class Logicboxes extends Module {
 	public function getClientTabs($package) {
 		if ($package->meta->type == "domain") {
 			return array(
-				'tabClientWhois' => Language::_("Logicboxes.tab_whois.title", true),
-				'tabClientNameservers' => Language::_("Logicboxes.tab_nameservers.title", true),
-				'tabClientSettings' => Language::_("Logicboxes.tab_settings.title", true)
+				'tabClientWhois' => Language::_("PTisp.tab_whois.title", true),
+				'tabClientNameservers' => Language::_("PTisp.tab_nameservers.title", true),
+				'tabClientSettings' => Language::_("PTisp.tab_settings.title", true)
 			);
 		}
 		else {
@@ -1001,7 +1004,7 @@ class Logicboxes extends Module {
 	 * @return string The string representing the contents of this tab
 	 */
 	public function tabWhois($package, $service, array $get=null, array $post=null, array $files=null) {
-		return $this->manageWhois("tab_whois", $package, $service, $get, $post, $files);
+		return null:
 	}
 	
 	/**
@@ -1015,7 +1018,7 @@ class Logicboxes extends Module {
 	 * @return string The string representing the contents of this tab
 	 */
 	public function tabClientWhois($package, $service, array $get=null, array $post=null, array $files=null) {
-		return $this->manageWhois("tab_client_whois", $package, $service, $get, $post, $files);
+		return null;
 	}
 	
 	/**
@@ -1075,109 +1078,6 @@ class Logicboxes extends Module {
 	}
 	
 	/**
-	 * Handle updating whois information
-	 *
-	 * @param string $view The view to use
-	 * @param stdClass $package A stdClass object representing the current package
-	 * @param stdClass $service A stdClass object representing the current service
-	 * @param array $get Any GET parameters
-	 * @param array $post Any POST parameters
-	 * @param array $files Any FILES parameters
-	 * @return string The string representing the contents of this tab
-	 */
-	private function manageWhois($view, $package, $service, array $get=null, array $post=null, array $files=null) {
-		$row = $this->getModuleRow($package->module_row);
-		$api = $this->getApi($row->meta->reseller_id, $row->meta->key, $row->meta->sandbox == "true");
-		$api->loadCommand("logicboxes_domains");
-		$domains = new LogicboxesDomains($api);
-		
-		$vars = new stdClass();
-		
-		$contact_fields = Configure::get("Logicboxes.contact_fields");
-		$fields = $this->serviceFieldsToObject($service->fields);
-		$sections = array('registrantcontact', 'admincontact', 'techcontact', 'billingcontact');
-		$show_content = true;
-		
-		if (!empty($post)) {
-			$api->loadCommand("logicboxes_contacts");
-			$contacts = new LogicboxesContacts($api);
-			
-			foreach ($sections as $section) {
-				$contact = array();
-				foreach ($post as $key => $value) {
-					if (strpos($key, $section . "_") !== false && $value != "")
-						$contact[str_replace($section . "_", "", $key)] = $value;
-				}
-				
-				$response = $contacts->modify($contact);
-				$this->processResponse($api, $response);
-				if ($this->Input->errors())
-					break;
-			}
-
-			$vars = (object)$post;
-		}
-		elseif (property_exists($fields, "order-id")) {
-			$response = $domains->details(array('order-id' => $fields->{'order-id'}, 'options' => array("RegistrantContactDetails", "AdminContactDetails", "TechContactDetails", "BillingContactDetails")));
-			
-			if ($response->status() == "OK") {
-				$data= $response->response();
-				
-				// Format fields
-				foreach ($sections as $section) {
-					foreach ($data->$section as $name => $value) {
-						if ($name == "address1")
-							$name = "address-line-1";
-						elseif ($name == "address2")
-							$name = "address-line-2";
-						elseif ($name == "zip")
-							$name = "zipcode";
-						elseif ($name == "telnocc")
-							$name = "phone-cc";
-						elseif ($name == "telno")
-							$name = "phone";
-						elseif ($name == "emailaddr")
-							$name = "email";
-						elseif ($name == "contactid")
-							$name = "contact-id";
-						$vars->{$section . "_" . $name} = $value;
-					}
-				}
-			}
-		}
-		else {
-			// No order-id; info is not available
-			$show_content = false;
-		}
-		
-		$contact_fields = array_merge(Configure::get("Logicboxes.contact_fields"), array('contact-id' => array('type' => "hidden")));
-		unset($contact_fields['customer-id']);
-		unset($contact_fields['type']);
-		
-		$all_fields = array();
-		foreach ($contact_fields as $key => $value) {
-			$all_fields['admincontact_' . $key] = $value;
-			$all_fields['techcontact_' . $key] = $value;
-			$all_fields['registrantcontact_' . $key] = $value;
-			$all_fields['billingcontact_' . $key] = $value;
-		}
-
-		$module_fields = $this->arrayToModuleFields(Configure::get("Logicboxes.contact_fields"), null, $vars);
-		
-		$view = ($show_content ? $view : "tab_unavailable");
-		$this->view = new View($view, "default");
-		
-		// Load the helpers required for this view
-		Loader::loadHelpers($this, array("Form", "Html"));
-		
-		$this->view->set("vars", $vars);
-		$this->view->set("fields", $this->arrayToModuleFields($all_fields, null, $vars)->getFields());
-		$this->view->set("sections", $sections);
-		$this->view->setDefaultView("components" . DS . "modules" . DS . "logicboxes" . DS);
-		return $this->view->fetch();
-	}
-	
-	/**
 	 * Handle updating nameserver information
 	 *
 	 * @param string $view The view to use
@@ -1191,44 +1091,22 @@ class Logicboxes extends Module {
 	private function manageNameservers($view, $package, $service, array $get=null, array $post=null, array $files=null) {
 		$vars = new stdClass();
 		
-		$row = $this->getModuleRow($package->module_row);
-		$api = $this->getApi($row->meta->reseller_id, $row->meta->key, $row->meta->sandbox == "true");
-		$api->loadCommand("logicboxes_domains");
-		$domains = new LogicboxesDomains($api);
-		
-		$fields = $this->serviceFieldsToObject($service->fields);
-		$show_content = true;
-		
-		$tld = $this->getTld($fields->{'domain-name'});
-		$sld = substr($fields->{'domain-name'}, 0, -strlen($tld));
-		
-		if (property_exists($fields, "order-id")) {
-			if (!empty($post)) {
-				$ns = array();
-				foreach ($post['ns'] as $i => $nameserver) {
-					if ($nameserver != "")
-						$ns[] = $nameserver;
-				}
-				$post['order-id'] = $fields->{'order-id'};
-				$response = $domains->modifyNs(array('order-id' => $fields->{'order-id'}, 'ns' => $ns));
-				$this->processResponse($api, $response);
-				
-				$vars = (object)$post;
-			}
-			else {
-				$response = $domains->details(array('order-id' => $fields->{'order-id'}, 'options' => "NsDetails"))->response();
-				
-				$vars->ns = array();
-				for ($i=0; $i<5 ;$i++) {
-					if (isset($response->{"ns" . ($i+1)}))
-						$vars->ns[] = $response->{"ns" . ($i+1)};
-				}
-			}
-		}
-		else {
-			// No order-id; info is not available
-			$show_content = false;
-		}
+    $domain = $fields->{'domain-name'};
+
+    $request = new RestRequest("https://api.ptisp.pt/domains/" . $domain . "/info", "GET");
+    $request->setUsername($username);
+    $request->setPassword($password);
+    $request->execute();
+    $show_content = true;
+
+    $result = json_decode($request->getResponseBody(), true);
+
+    if ($result["result"] != "ok") {
+      $vars->ns[] = array();
+      $show_content = false;
+    } else {
+      $vars->ns[] = $result["data"]["ns"];
+    }
 		
 		$view = ($show_content ? $view : "tab_unavailable");
 		$this->view = new View($view, "default");
@@ -1237,7 +1115,7 @@ class Logicboxes extends Module {
 		Loader::loadHelpers($this, array("Form", "Html"));
 		
 		$this->view->set("vars", $vars);
-		$this->view->setDefaultView("components" . DS . "modules" . DS . "logicboxes" . DS);
+		$this->view->setDefaultView("components" . DS . "modules" . DS . "ptisp" . DS);
 		return $this->view->fetch();
 	}
 	
@@ -1307,31 +1185,8 @@ class Logicboxes extends Module {
 		Loader::loadHelpers($this, array("Form", "Html"));
 		
 		$this->view->set("vars", $vars);
-		$this->view->setDefaultView("components" . DS . "modules" . DS . "logicboxes" . DS);
+		$this->view->setDefaultView("components" . DS . "modules" . DS . "ptisp" . DS);
 		return $this->view->fetch();
-	}
-	
-	/**
-	 * Creates a customer
-	 *
-	 * @param int $module_row_id The module row ID to add the customer under
-	 * @param array $vars An array of customer information
-	 * @return int The customer-id created, null otherwise
-	 * @see LogicboxesCustomers::signup()
-	 */
-	private function createCustomer($module_row_id, $vars) {
-		$row = $this->getModuleRow($module_row_id);
-		$api = $this->getApi($row->meta->reseller_id, $row->meta->key, $row->meta->sandbox == "true");
-		$api->loadCommand("logicboxes_customers");
-		$customers = new LogicboxesCustomers($api);
-		
-		$response = $customers->signup($vars);
-		
-		$this->processResponse($api, $response);
-		
-		if (!$this->Input->errors() && $response->response() > 0)
-			return $response->response();
-		return null;
 	}
 	
 	/**
@@ -1342,21 +1197,16 @@ class Logicboxes extends Module {
 	 * @return int The contact-id created, null otherwise
 	 * @see LogicboxesContacts::add()
 	 */
-	private function createContact($module_row_id, $vars) {
-		unset($vars['lang-pref'], $vars['username'], $vars['passwd']);
+	private function createContact($domain, $vars) {
+		$request = new RestRequest("https://api.ptisp.pt/domains/" . $domain . "/contacts/create", "POST");
+    $request->setUsername($username);
+    $request->setPassword($password);
+
+    $request->execute($par);
+    $result = json_decode($request->getResponseBody(), true);
 		
-		$row = $this->getModuleRow($module_row_id);
-		$api = $this->getApi($row->meta->reseller_id, $row->meta->key, $row->meta->sandbox == "true");
-		$api->loadCommand("logicboxes_contacts");
-		$contacts = new LogicboxesContacts($api);
-		
-		$vars = array_merge($vars, $this->createMap($vars));
-		$response = $contacts->add($vars);
-		
-		$this->processResponse($api, $response);
-		
-		if (!$this->Input->errors() && $response->response() > 0)
-			return $response->response();
+		if (!$this->Input->errors() && $result["result"] == "ok" )
+			return $result["nichandle"];
 		return null;
 	}
 	
@@ -1461,21 +1311,18 @@ class Logicboxes extends Module {
 	 * @return boolean True if available, false otherwise
 	 */
 	public function checkAvailability($domain) {
+    $request = new RestRequest("https://api.ptisp.pt/domains/" . $domain . "/check", "GET");
+    $request->setUsername($username);
+    $request->setPassword($password);
+    $request->execute();
 
-		$row = $this->getModuleRow();
-		$api = $this->getApi($row->meta->reseller_id, $row->meta->key, $row->meta->sandbox == "true");
-		$api->loadCommand("logicboxes_domains");
-		$domains = new LogicboxesDomains($api);
-		$tld = $this->getTld($domain);
-		$sld = substr_replace($domain, '', -strlen($tld));
-		$result = $domains->available(array('domain-name' => $sld, 'tlds' => ltrim($tld, '.')));
-		
-		if ($result->status() != "OK")
-			return false;
-		
-		$response = $result->response();
+    $result = json_decode($request->getResponseBody(), true);
 
-		return in_array($response->{$domain}->status, array("unknown", "available"));
+    if ($result["result"] != "ok" || $result["available"] != "true") {
+      return false;
+    }
+
+    return true;
 	}
 	
 	/**
@@ -1490,7 +1337,7 @@ class Logicboxes extends Module {
 				'valid' => array(
 					'rule' => "isEmpty",
 					'negate' => true,
-					'message' => Language::_("Logicboxes.!error.reseller_id.valid", true)
+					'message' => Language::_("PTisp.!error.reseller_id.valid", true)
 				)
 			),
 			'key' => array(
@@ -1498,11 +1345,11 @@ class Logicboxes extends Module {
 					'last' => true,
 					'rule' => "isEmpty",
 					'negate' => true,
-					'message' => Language::_("Logicboxes.!error.key.valid", true)
+					'message' => Language::_("PTisp.!error.key.valid", true)
 				),
 				'valid_connection' => array(
 					'rule' => array(array($this, "validateConnection"), $vars['reseller_id'], isset($vars['sandbox']) ? $vars['sandbox'] : "false"),
-					'message' => Language::_("Logicboxes.!error.key.valid_connection", true)
+					'message' => Language::_("PTisp.!error.key.valid_connection", true)
 				)
 			)
 		);
@@ -1532,7 +1379,7 @@ class Logicboxes extends Module {
 	 * @return LogicboxesApi The LogicboxesApi instance
 	 */
 	private function getApi($reseller_id, $key, $sandbox) {
-		Loader::load(dirname(__FILE__) . DS . "apis" . DS . "logicboxes_api.php");
+		Loader::load(dirname(__FILE__) . DS . "apis" . DS . "RestRequest.inc.php");
 		
 		return new LogicboxesApi($reseller_id, $key, $sandbox);
 	}
@@ -1583,7 +1430,7 @@ class Logicboxes extends Module {
 	 * @return string The TLD of the domain
 	 */
 	private function getTld($domain, $top = false) {
-		$tlds = Configure::get("Logicboxes.tlds");
+		$tlds = Configure::get("PTisp.tlds");
 		
 		$domain = strtolower($domain);
 		

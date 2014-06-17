@@ -12,7 +12,7 @@
                 <?php
                 foreach ($sections as $index => $key) {
                 ?>
-                <li<?php echo $index == 0 ? " class=\"active\"" : "";?>><a href="#<?php $this->Html->_($key);?>" data-toggle="tab"><?php $this->_("Logicboxes.tab_whois.section_" . $key);?></a></li>
+                <li<?php echo $index == 0 ? " class=\"active\"" : "";?>><a href="#<?php $this->Html->_($key);?>" data-toggle="tab"><?php $this->_("PTisp.tab_whois.section_" . $key);?></a></li>
                 <?php
                 }
                 ?>
@@ -98,7 +98,7 @@
 		</div>
 	</div>
 	<button class="btn btn-default pull-right" type="submit">
-		<i class="fa fa-edit"></i> <?php $this->_("Logicboxes.tab_whois.field_submit");?>
+		<i class="fa fa-edit"></i> <?php $this->_("PTisp.tab_whois.field_submit");?>
 	</button>
 	<?php
 	$this->Form->end();
