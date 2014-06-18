@@ -11,33 +11,21 @@
 			</div>
 			<div class="pad">
 				<ul>
-					<li>
-						<?php
-						$this->Form->label($this->_("PTisp.row_meta.registrar", true), "registrar");
-						$this->Form->fieldText("registrar", $this->Html->ifSet($vars->registrar), array('id' => "registrar"));
-						?>
-					</li>
-					<li>
-						<?php
-						$this->Form->label($this->_("PTisp.row_meta.reseller_id", true), "reseller_id");
-						$this->Form->fieldText("reseller_id", $this->Html->ifSet($vars->reseller_id), array('id' => "reseller_id"));
-						?>
-					</li>
-					<li>
-						<?php
-						$this->Form->label($this->_("PTisp.row_meta.key", true), "key");
-						$this->Form->fieldText("key", $this->Html->ifSet($vars->key), array('id' => "key"));
-						?>
-					</li>
-					<li>
-						<?php
-						$this->Form->fieldCheckbox("sandbox", "true", $this->Html->ifSet($vars->sandbox) == "true", array('id' => "sandbox"));
-						$this->Form->label($this->_("PTisp.row_meta.sandbox", true), "sandbox", array('class' => "inline"));
-						?>
-					</li>
+          <li>
+            <?php
+            $this->Form->label($this->_("PTisp.row_meta.reseller_id", true), "reseller_id");
+            $this->Form->fieldText("reseller_id", $this->Html->ifSet($vars->reseller_id), array('id' => "reseller_id"));
+            ?>
+          </li>
+          <li>
+            <?php
+            $this->Form->label($this->_("PTisp.row_meta.key", true), "key");
+            $this->Form->fieldText("key", $this->Html->ifSet($vars->key), array('id' => "key"));
+            ?>
+          </li>
 				</ul>
 			</div>
-			
+
 			<div class="button_row"><a class="btn_right submit" href="#"><?php $this->_("PTisp.add_row.add_btn");?></a></div>
 			<?php
 			$this->Form->end();

@@ -1,6 +1,6 @@
 <?php
 // Basics
-$lang['PTisp.name'] = "LogicBoxes";
+$lang['PTisp.name'] = "ptisp";
 $lang['PTisp.module_row'] = "Account";
 $lang['PTisp.module_row_plural'] = "Accounts";
 
@@ -8,6 +8,7 @@ $lang['PTisp.module_row_plural'] = "Accounts";
 $lang['PTisp.add_module_row'] = "Add Account";
 $lang['PTisp.manage.module_rows_title'] = "Accounts";
 $lang['PTisp.manage.module_rows_heading.registrar'] = "Registrar Name";
+$lang['PTisp.manage.module_rows_heading.user'] = "API Key";
 $lang['PTisp.manage.module_rows_heading.reseller_id'] = "Reseller ID";
 $lang['PTisp.manage.module_rows_heading.key'] = "API Key";
 $lang['PTisp.manage.module_rows_heading.sandbox'] = "Sandbox";
@@ -19,19 +20,19 @@ $lang['PTisp.manage.module_rows_no_results'] = "There are no accounts.";
 
 // Row Meta
 $lang['PTisp.row_meta.registrar'] = "Registrar Name";
-$lang['PTisp.row_meta.reseller_id'] = "Reseller ID";
-$lang['PTisp.row_meta.key'] = "Key";
+$lang['PTisp.row_meta.reseller_id'] = "Email";
+$lang['PTisp.row_meta.key'] = "API Hash";
 $lang['PTisp.row_meta.sandbox'] = "Sandbox";
 $lang['PTisp.row_meta.sandbox_true'] = "Yes";
 $lang['PTisp.row_meta.sandbox_false'] = "No";
 
 // Add row
-$lang['PTisp.add_row.box_title'] = "Add LogicBoxes Account";
+$lang['PTisp.add_row.box_title'] = "Add PTisp Account";
 $lang['PTisp.add_row.basic_title'] = "Basic Settings";
 $lang['PTisp.add_row.add_btn'] = "Add Account";
 
 // Edit row
-$lang['PTisp.edit_row.box_title'] = "Edit LogicBoxes Account";
+$lang['PTisp.edit_row.box_title'] = "Edit PTisp Account";
 $lang['PTisp.edit_row.basic_title'] = "Basic Settings";
 $lang['PTisp.edit_row.add_btn'] = "Update Account";
 
@@ -71,7 +72,7 @@ $lang['PTisp.tab_settings.field_submit'] = "Update Settings";
 $lang['PTisp.!error.registrar.valid'] = "Please enter a registrar name.";
 $lang['PTisp.!error.reseller_id.valid'] = "Please enter a reseller ID.";
 $lang['PTisp.!error.key.valid'] = "Please enter a key.";
-$lang['PTisp.!error.key.valid_connection'] = "The reseller ID and key combination appear to be invalid, or your LogicBoxes account may not be configured to allow API access.";
+$lang['PTisp.!error.key.valid_connection'] = "The reseller ID and key combination appear to be invalid, or your PTisp account may not be configured to allow API access.";
 
 
 // Domain Transfer Fields

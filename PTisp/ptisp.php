@@ -295,7 +295,7 @@ class PTisp extends Module {
 					}
 
           //REGISTER
-          $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/register/" . $regperiod, "POST");
+          $request = new RestRequest("https://api.ptisp.pt/domains/" . $vars['domain-name'] . "/register/" . $regperiod, "POST");
           $request->setUsername($username);
           $request->setPassword($password);
           $request->execute($vars);
@@ -558,7 +558,7 @@ class PTisp extends Module {
 		// Load the view into this object, so helpers can be automatically added to the view
 		$this->view = new View("manage", "default");
 		$this->view->base_uri = $this->base_uri;
-		$this->view->setDefaultView("components" . DS . "modules" . DS . "PTisp" . DS);
+		$this->view->setDefaultView("components" . DS . "modules" . DS . "ptisp" . DS);
 		
 		// Load the helpers required for this view
 		Loader::loadHelpers($this, array("Form", "Html", "Widget"));
@@ -578,7 +578,7 @@ class PTisp extends Module {
 		// Load the view into this object, so helpers can be automatically added to the view
 		$this->view = new View("add_row", "default");
 		$this->view->base_uri = $this->base_uri;
-		$this->view->setDefaultView("components" . DS . "modules" . DS . "PTisp" . DS);
+		$this->view->setDefaultView("components" . DS . "modules" . DS . "ptisp" . DS);
 		
 		// Load the helpers required for this view
 		Loader::loadHelpers($this, array("Form", "Html", "Widget"));
@@ -604,7 +604,7 @@ class PTisp extends Module {
 		// Load the view into this object, so helpers can be automatically added to the view
 		$this->view = new View("edit_row", "default");
 		$this->view->base_uri = $this->base_uri;
-		$this->view->setDefaultView("components" . DS . "modules" . DS . "PTisp" . DS);
+		$this->view->setDefaultView("components" . DS . "modules" . DS . "ptisp" . DS);
 		
 		// Load the helpers required for this view
 		Loader::loadHelpers($this, array("Form", "Html", "Widget"));
@@ -639,6 +639,8 @@ class PTisp extends Module {
 		if (empty($vars['sandbox']))
 			$vars['sandbox'] = "false";
 		
+    $vars["registrar"]= "Ptisp";
+    $vars["sandbox"]= "false";
 		$this->Input->setRules($this->getRowRules($vars));
 		
 		// Validate module row
@@ -705,9 +707,9 @@ class PTisp extends Module {
 		);
 		
 		// Set type of package
-		$type = $fields->label(Language::_("PTisp.package_fields.type", true), "logicboxes_type");
+		$type = $fields->label(Language::_("PTisp.package_fields.type", true), "ptisp_type");
 		$type->attach($fields->fieldSelect("meta[type]", $types,
-			$this->Html->ifSet($vars->meta['type']), array('id'=>"logicboxes_type")));
+			$this->Html->ifSet($vars->meta['type']), array('id'=>"ptisp_type")));
 		$fields->setField($type);	
 		
 		// Set all TLD checkboxes
@@ -722,10 +724,10 @@ class PTisp extends Module {
 		$fields->setField($tld_options);
 		
 		// Set nameservers
-		for ($i=1; $i<=5; $i++) {
-			$type = $fields->label(Language::_("PTisp.package_fields.ns" . $i, true), "logicboxes_ns" . $i);
+		for ($i=1; $i<=4; $i++) {
+			$type = $fields->label(Language::_("PTisp.package_fields.ns" . $i, true), "ptisp_ns" . $i);
 			$type->attach($fields->fieldText("meta[ns][]",
-				$this->Html->ifSet($vars->meta['ns'][$i-1]), array('id'=>"logicboxes_ns" . $i)));
+				$this->Html->ifSet($vars->meta['ns'][$i-1]), array('id'=>"ptisp_ns" . $i)));
 			$fields->setField($type);
 		}		
 		
@@ -976,7 +978,7 @@ class PTisp extends Module {
 	 * @return string The string representing the contents of this tab
 	 */
 	public function tabWhois($package, $service, array $get=null, array $post=null, array $files=null) {
-		return null:
+		return null;
 	}
 	
 	/**
@@ -1336,10 +1338,12 @@ class PTisp extends Module {
 	 * @return boolean True if the connection details are valid, false otherwise
 	 */
 	public function validateConnection($key, $reseller_id, $sandbox) {
+    /*
 		$api = $this->getApi($reseller_id, $key, $sandbox == "true");
 		$api->loadCommand("logicboxes_domains");
 		$domains = new LogicboxesDomains($api);
-		return $domains->available(array('domain-name' => "logicboxes", 'tlds' => array("com")))->status() == "OK";
+    */
+		return true;
 	}
 	
 	/**
@@ -1353,7 +1357,7 @@ class PTisp extends Module {
 	private function getApi($reseller_id, $key, $sandbox) {
 		Loader::load(dirname(__FILE__) . DS . "apis" . DS . "RestRequest.inc.php");
 		
-		return new LogicboxesApi($reseller_id, $key, $sandbox);
+		return null;
 	}
 	
 	/**
