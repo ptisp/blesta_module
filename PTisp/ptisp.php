@@ -163,7 +163,8 @@ class PTisp extends Module {
 	public function addService($package, array $vars=null, $parent_package=null, $parent_service=null, $status="pending") {
 		
 		$row = $this->getModuleRow($package->module_row);
-		$api = $this->getApi($row->meta->reseller_id, $row->meta->key, $row->meta->sandbox == "true");
+		/*
+    $api = $this->getApi($row->meta->reseller_id, $row->meta->key, $row->meta->sandbox == "true");
 		
 		#
 		# TODO: Handle validation checks
@@ -171,7 +172,7 @@ class PTisp extends Module {
 		
 		$tld = null;
 		$input_fields = array();
-		
+		*/
 		if (isset($vars['domain-name']))
 			$tld = $this->getTld($vars['domain-name'], true);
 		
@@ -188,9 +189,10 @@ class PTisp extends Module {
 		
 		if (isset($vars['use_module']) && $vars['use_module'] == "true") {
 			if ($package->meta->type == "domain") {
+        /*
 				$api->loadCommand("logicboxes_domains");
 				$domains = new LogicboxesDomains($api);
-				
+				*/
 				$contact_type = $this->getContactType($tld);
 				$order_id = null;
 				$vars['years'] = 1;
@@ -244,14 +246,6 @@ class PTisp extends Module {
 						$vars[$key] = substr($client->settings['language'], 0, 2);
 				}
 				
-				// Set locality for .ASIA
-				if ($tld == ".asia")
-					$vars['attr_locality'] = $client->country;
-				elseif ($tld == ".ru") {
-					$vars['attr_org-r'] = $vars['company'];
-					$vars['attr_address-r'] = $vars['address-line-1'];
-					$vars['attr_person-r'] = $vars['name'];
-				}
 				
 				// Create customer if necessary
 				if (!$customer_id)
@@ -268,36 +262,56 @@ class PTisp extends Module {
 				$vars['tech-contact-id'] = $this->formatContact($contact_id, $tld, "tech");
 				$contact_id = $this->createContact($package->module_row, array_intersect_key($vars, array_merge($contact_fields, $domain_contact_fields)));
 				$vars['billing-contact-id'] = $this->formatContact($contact_id, $tld, "billing");
-				$vars['invoice-option'] = "NoInvoice";
-				$vars['protect-privacy'] = "false";
-				
-				// Handle special contact assignment case for .ASIA
-				if ($tld == ".asia")
-					$vars['attr_cedcontactid'] = $contact_id;
-				// Handle special assignment case for .AU
-				elseif ($tld == ".au") {
-					$vars['attr_eligibilityName'] = $client->company;
-					$vars['attr_registrantName'] = $client->first_name . " " . $client->last_name;
-				}
-				
-				$vars = array_merge($vars, $this->createMap($vars));
+
 				
 				// Handle transfer
 				if (isset($vars['transfer']) || isset($vars['auth-code'])) {
-					$response = $domains->transfer(array_intersect_key($vars, $transfer_fields));
+          // transfer
+          $transfersecret = $vars['auth-code'];
+
+          $request = new RestRequest("https://api.ptisp.pt/domains/" . $vars['domain-name'] . "/transfer/", "POST");
+          $request->setUsername($username);
+          $request->setPassword($password);
+
+          $request->execute(array("authcode" => $transfersecret));
+
+          $result = json_decode($request->getResponseBody(), true);
+					
+          if ($result["result"] != "ok") {
+            //transfer failed
+          } else {
+            //transfer ok
+          }
+
+          //$response = $domains->transfer(array_intersect_key($vars, $transfer_fields));
 				}
 				// Handle registration
 				else {
 					// Set nameservers
 					$vars['ns'] = array();
-					for ($i=1; $i<=5; $i++) {
+					for ($i=1; $i<=4; $i++) {
 						if (isset($vars["ns" . $i]) && $vars["ns" . $i] != "")
 							$vars['ns'][] = $vars["ns" . $i];
 					}
 
-					$response = $domains->register(array_intersect_key($vars, $domain_fields));
-				}
+          //REGISTER
+          $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/register/" . $regperiod, "POST");
+          $request->setUsername($username);
+          $request->setPassword($password);
+          $request->execute($vars);
 
+          $result = json_decode($request->getResponseBody(), true);
+
+          if ($result["result"] != "ok") {
+            // registry failed
+          } else {
+            // registry ok
+          }
+
+					//$response = $domains->register(array_intersect_key($vars, $domain_fields));
+				}
+        /*
+        TRATAMENTO DE ERRO
 				if (isset($response->response()->entityid))
 					$order_id = $response->response()->entityid;
 
@@ -305,38 +319,25 @@ class PTisp extends Module {
 				
 				if ($this->Input->errors())
 					return;
-				
+				*/
 				return array(
 					array('key' => "domain-name", 'value' => $vars['domain-name'], 'encrypted' => 0),
 					array('key' => "order-id", 'value' => $order_id, 'encrypted' => 0)
 				);
 			}
-			else {
+			/*
+      else {
 				
 				#
 				# TODO: Create SSL cert
 				#
 			}
+      */
 		}
 		elseif ($status != "pending") {
 			if ($package->meta->type == "domain") {
-				$api->loadCommand("logicboxes_domains");
-				$domains = new LogicboxesDomains($api);
-				
-				$response = $domains->orderid($vars);	
-				$this->processResponse($api, $response);
-				
-				if ($this->Input->errors())
-					return;
-				
-				$order_id = null;
-				if ($response->response())
-					$order_id = $response->response();
-				
-				return array(
-					array('key' => "domain-name", 'value' => $vars['domain-name'], 'encrypted' => 0),
-					array('key' => "order-id", 'value' => $order_id, 'encrypted' => 0)
-				);
+				// ?!?!?!?! TODO
+        error_log(print_r("Satus pending", true));
 			}
 		}
 		
@@ -1173,7 +1174,7 @@ class PTisp extends Module {
     $request->setUsername($username);
     $request->setPassword($password);
 
-    $request->execute($par);
+    $request->execute($vars);
     $result = json_decode($request->getResponseBody(), true);
 		
 		if (!$this->Input->errors() && $result["result"] == "ok" )
