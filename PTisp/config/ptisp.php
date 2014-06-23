@@ -47,10 +47,6 @@ Configure::set("PTisp.nameserver_fields", array(
 	'ns4' => array(
 		'label' => Language::_("PTisp.nameserver.ns4", true),
 		'type' => "text"
-	),
-	'ns5' => array(
-		'label' => Language::_("PTisp.nameserver.ns5", true),
-		'type' => "text"
 	)
 ));
 

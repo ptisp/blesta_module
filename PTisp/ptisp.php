@@ -12,7 +12,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . "apis" . DIRECTORY_SEPARA
  * @link http://www.blesta.com/ Blesta
  */
 class PTisp extends Module {
-	
+
 	/**
 	 * @var string The version of this module
 	 */
@@ -28,10 +28,10 @@ class PTisp extends Module {
 	public function __construct() {
 		// Load components required by this module
 		Loader::loadComponents($this, array("Input"));
-		
+
 		// Load the language required by this module
 		Language::loadLang("ptisp", null, dirname(__FILE__) . DS . "language" . DS);
-		
+
 		Configure::load("ptisp", dirname(__FILE__) . DS . "config" . DS);
 	}
 
@@ -43,7 +43,7 @@ class PTisp extends Module {
 	public function getName() {
 		return Language::_("PTisp.name", true);
 	}
-	
+
 	/**
 	 * Returns the version of this module
 	 *
@@ -61,7 +61,7 @@ class PTisp extends Module {
 	public function getAuthors() {
 		return self::$authors;
 	}
-	
+
 	/**
 	 * Returns the value used to identify a particular service
 	 *
@@ -75,7 +75,7 @@ class PTisp extends Module {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Returns a noun used to refer to a module row (e.g. "Server", "VPS", "Reseller Account", etc.)
 	 *
@@ -84,7 +84,7 @@ class PTisp extends Module {
 	public function moduleRowName() {
 		return Language::_("PTisp.module_row", true);
 	}
-	
+
 	/**
 	 * Returns a noun used to refer to a module row in plural form (e.g. "Servers", "VPSs", "Reseller Accounts", etc.)
 	 *
@@ -93,7 +93,7 @@ class PTisp extends Module {
 	public function moduleRowNamePlural() {
 		return Language::_("PTisp.module_row_plural", true);
 	}
-	
+
 	/**
 	 * Returns a noun used to refer to a module group (e.g. "Server Group", "Cloud", etc.)
 	 *
@@ -102,7 +102,7 @@ class PTisp extends Module {
 	public function moduleGroupName() {
 		return null;
 	}
-	
+
 	/**
 	 * Returns the key used to identify the primary field from the set of module row meta fields.
 	 * This value can be any of the module row meta fields.
@@ -111,8 +111,8 @@ class PTisp extends Module {
 	 */
 	public function moduleRowMetaKey() {
 		return "registrar";
-	}	
-	
+	}
+
 	/**
 	 * Returns the value used to identify a particular package service which has
 	 * not yet been made into a service. This may be used to uniquely identify
@@ -128,7 +128,7 @@ class PTisp extends Module {
 			return $vars['domain-name'];
 		return null;
 	}
-	
+
 	/**
 	 * Attempts to validate service info. This is the top-level error checking method. Sets Input errors on failure.
 	 *
@@ -139,7 +139,7 @@ class PTisp extends Module {
 	public function validateService($package, array $vars=null) {
 		return true;
 	}
-	
+
 	/**
 	 * Adds the service to the remote server. Sets Input errors on failure,
 	 * preventing the service from being added.
@@ -161,21 +161,23 @@ class PTisp extends Module {
 	 * @see Module::getModuleRow()
 	 */
 	public function addService($package, array $vars=null, $parent_package=null, $parent_service=null, $status="pending") {
-		
+
 		$row = $this->getModuleRow($package->module_row);
+		$username = $row->meta->reseller_id;
+		$password = $row->meta->key;
 		/*
     $api = $this->getApi($row->meta->reseller_id, $row->meta->key, $row->meta->sandbox == "true");
-		
+
 		#
 		# TODO: Handle validation checks
 		#
-		
+
 		$tld = null;
 		$input_fields = array();
 		*/
 		if (isset($vars['domain-name']))
 			$tld = $this->getTld($vars['domain-name'], true);
-		
+
 		if ($package->meta->type == "domain") {
 			$contact_fields = Configure::get("PTisp.contact_fields");
 			$customer_fields = Configure::get("PTisp.customer_fields");
@@ -183,10 +185,10 @@ class PTisp extends Module {
 			$transfer_fields = array_merge(Configure::get("PTisp.transfer_fields"), $domain_field_basics);
 			$domain_fields = array_merge(Configure::get("PTisp.domain_fields"), $domain_field_basics);
 			$domain_contact_fields = (array)Configure::get("PTisp.contact_fields" . $tld);
-			
+
 			$input_fields = array_merge($contact_fields, $customer_fields, $transfer_fields, $domain_fields, $domain_field_basics, $domain_contact_fields);
 		}
-		
+
 		if (isset($vars['use_module']) && $vars['use_module'] == "true") {
 			if ($package->meta->type == "domain") {
         /*
@@ -196,22 +198,22 @@ class PTisp extends Module {
 				$contact_type = $this->getContactType($tld);
 				$order_id = null;
 				$vars['years'] = 1;
-				
+
 				foreach ($package->pricing as $pricing) {
 					if ($pricing->id == $vars['pricing_id']) {
 						$vars['years'] = $pricing->term;
 						break;
 					}
 				}
-				
+
 				// Set all whois info from client ($vars['client_id'])
 				if (!isset($this->Clients))
 					Loader::loadModels($this, array("Clients"));
-					
+
 				$client = $this->Clients->get($vars['client_id']);
 				$customer_id = $this->getCustomerId($package->module_row, $client->email);
 				$contact_id = null;
-				
+
 				foreach (array_merge($contact_fields, $customer_fields) as $key => $field) {
 					if ($key == "name")
 						$vars[$key] = $client->first_name . " " . $client->last_name;
@@ -245,16 +247,13 @@ class PTisp extends Module {
 					elseif ($key == "lang-pref")
 						$vars[$key] = substr($client->settings['language'], 0, 2);
 				}
-				
-				
-				// Create customer if necessary
-				if (!$customer_id)
-					$customer_id = $this->createCustomer($package->module_row, array_intersect_key($vars, array_merge($contact_fields, $customer_fields)));
-				
+
 				$vars['type'] = $contact_type;
-				
+
 				$vars['customer-id'] = $customer_id;
-				$contact_id = $this->createContact($package->module_row, array_intersect_key($vars, array_merge($contact_fields, $domain_contact_fields)));
+				/*
+				$contact_id = $this->createContact($package->module_row, array_intersect_key($vars, array_merge($contact_fields, $domain_contact_fields)), $username, $password);
+				/*
 				$vars['reg-contact-id'] = $contact_id;
 				$contact_id = $this->createContact($package->module_row, array_intersect_key($vars, array_merge($contact_fields, $domain_contact_fields)));
 				$vars['admin-contact-id'] = $this->formatContact($contact_id, $tld, "admin");
@@ -262,8 +261,8 @@ class PTisp extends Module {
 				$vars['tech-contact-id'] = $this->formatContact($contact_id, $tld, "tech");
 				$contact_id = $this->createContact($package->module_row, array_intersect_key($vars, array_merge($contact_fields, $domain_contact_fields)));
 				$vars['billing-contact-id'] = $this->formatContact($contact_id, $tld, "billing");
+*/
 
-				
 				// Handle transfer
 				if (isset($vars['transfer']) || isset($vars['auth-code'])) {
           // transfer
@@ -276,7 +275,7 @@ class PTisp extends Module {
           $request->execute(array("authcode" => $transfersecret));
 
           $result = json_decode($request->getResponseBody(), true);
-					
+
           if ($result["result"] != "ok") {
             //transfer failed
           } else {
@@ -295,10 +294,11 @@ class PTisp extends Module {
 					}
 
           //REGISTER
+					$regperiod = 1;
           $request = new RestRequest("https://api.ptisp.pt/domains/" . $vars['domain-name'] . "/register/" . $regperiod, "POST");
           $request->setUsername($username);
           $request->setPassword($password);
-          $request->execute($vars);
+          $request->execute();
 
           $result = json_decode($request->getResponseBody(), true);
 
@@ -316,7 +316,7 @@ class PTisp extends Module {
 					$order_id = $response->response()->entityid;
 
 				$this->processResponse($api, $response);
-				
+
 				if ($this->Input->errors())
 					return;
 				*/
@@ -327,7 +327,7 @@ class PTisp extends Module {
 			}
 			/*
       else {
-				
+
 				#
 				# TODO: Create SSL cert
 				#
@@ -340,7 +340,7 @@ class PTisp extends Module {
         error_log(print_r("Satus pending", true));
 			}
 		}
-		
+
 		$meta = array();
 		$fields = array_intersect_key($vars, array_merge(array('ns1' => true,'ns2' => true,'ns3' => true,'ns4' => true,'ns5' => true), $input_fields));
 
@@ -354,7 +354,7 @@ class PTisp extends Module {
 
 		return $meta;
 	}
-	
+
 	/**
 	 * Edits the service on the remote server. Sets Input errors on failure,
 	 * preventing the service from being edited.
@@ -374,7 +374,7 @@ class PTisp extends Module {
 	public function editService($package, $service, array $vars=array(), $parent_package=null, $parent_service=null) {
 		return null; // All this handled by admin/client tabs instead
 	}
-	
+
 	/**
 	 * Cancels the service on the remote server. Sets Input errors on failure,
 	 * preventing the service from being canceled.
@@ -393,7 +393,7 @@ class PTisp extends Module {
 	public function cancelService($package, $service, $parent_package=null, $parent_service=null) {
 		return null; // Nothing to do
 	}
-	
+
 	/**
 	 * Suspends the service on the remote server. Sets Input errors on failure,
 	 * preventing the service from being suspended.
@@ -412,7 +412,7 @@ class PTisp extends Module {
 	public function suspendService($package, $service, $parent_package=null, $parent_service=null) {
 		return null; // Nothing to do
 	}
-	
+
 	/**
 	 * Unsuspends the service on the remote server. Sets Input errors on failure,
 	 * preventing the service from being unsuspended.
@@ -431,7 +431,7 @@ class PTisp extends Module {
 	public function unsuspendService($package, $service, $parent_package=null, $parent_service=null) {
 		return null; // Nothing to do
 	}
-	
+
 	/**
 	 * Allows the module to perform an action when the service is ready to renew.
 	 * Sets Input errors on failure, preventing the service from renewing.
@@ -458,12 +458,12 @@ class PTisp extends Module {
 
     if ($result["result"] != "ok") {
       return false;
-    } 
+    }
 
 
     return true;
 	}
-	
+
 	/**
 	 * Updates the package for the service on the remote server. Sets Input
 	 * errors on failure, preventing the service's package from being changed.
@@ -499,7 +499,7 @@ class PTisp extends Module {
 	 * @see Module::getModuleRow()
 	 */
 	public function addPackage(array $vars=null) {
-		
+
 		$meta = array();
 		if (isset($vars['meta']) && is_array($vars['meta'])) {
 			// Return all package meta fields
@@ -511,10 +511,10 @@ class PTisp extends Module {
 				);
 			}
 		}
-		
+
 		return $meta;
 	}
-	
+
 	/**
 	 * Validates input data when attempting to edit a package, returns the meta
 	 * data to save when editing a package. Performs any action required to edit
@@ -531,7 +531,7 @@ class PTisp extends Module {
 	 * @see Module::getModuleRow()
 	 */
 	public function editPackage($package, array $vars=null) {
-		
+
 		$meta = array();
 		if (isset($vars['meta']) && is_array($vars['meta'])) {
 			// Return all package meta fields
@@ -543,10 +543,10 @@ class PTisp extends Module {
 				);
 			}
 		}
-		
-		return $meta;	
+
+		return $meta;
 	}
-	
+
 	/**
 	 * Returns the rendered view of the manage module page
 	 *
@@ -559,15 +559,15 @@ class PTisp extends Module {
 		$this->view = new View("manage", "default");
 		$this->view->base_uri = $this->base_uri;
 		$this->view->setDefaultView("components" . DS . "modules" . DS . "ptisp" . DS);
-		
+
 		// Load the helpers required for this view
 		Loader::loadHelpers($this, array("Form", "Html", "Widget"));
 
 		$this->view->set("module", $module);
-		
+
 		return $this->view->fetch();
 	}
-	
+
 	/**
 	 * Returns the rendered view of the add module row page
 	 *
@@ -579,18 +579,18 @@ class PTisp extends Module {
 		$this->view = new View("add_row", "default");
 		$this->view->base_uri = $this->base_uri;
 		$this->view->setDefaultView("components" . DS . "modules" . DS . "ptisp" . DS);
-		
+
 		// Load the helpers required for this view
 		Loader::loadHelpers($this, array("Form", "Html", "Widget"));
-		
+
 		// Set unspecified checkboxes
 		if (!empty($vars)) {
 			if (empty($vars['sandbox']))
 				$vars['sandbox'] = "false";
 		}
-		
+
 		$this->view->set("vars", (object)$vars);
-		return $this->view->fetch();	
+		return $this->view->fetch();
 	}
 
 	/**
@@ -599,16 +599,16 @@ class PTisp extends Module {
 	 * @param stdClass $module_row The stdClass representation of the existing module row
 	 * @param array $vars An array of post data submitted to or on the edit module row page (used to repopulate fields after an error)
 	 * @return string HTML content containing information to display when viewing the edit module row page
-	 */	
+	 */
 	public function manageEditRow($module_row, array &$vars) {
 		// Load the view into this object, so helpers can be automatically added to the view
 		$this->view = new View("edit_row", "default");
 		$this->view->base_uri = $this->base_uri;
 		$this->view->setDefaultView("components" . DS . "modules" . DS . "ptisp" . DS);
-		
+
 		// Load the helpers required for this view
 		Loader::loadHelpers($this, array("Form", "Html", "Widget"));
-		
+
 		if (empty($vars))
 			$vars = $module_row->meta;
 		else {
@@ -616,11 +616,11 @@ class PTisp extends Module {
 			if (empty($vars['sandbox']))
 				$vars['sandbox'] = "false";
 		}
-		
+
 		$this->view->set("vars", (object)$vars);
 		return $this->view->fetch();
 	}
-	
+
 	/**
 	 * Adds the module row on the remote server. Sets Input errors on failure,
 	 * preventing the row from being added.
@@ -634,22 +634,22 @@ class PTisp extends Module {
 	public function addModuleRow(array &$vars) {
 		$meta_fields = array("registrar", "reseller_id", "key", "sandbox");
 		$encrypted_fields = array("key");
-		
+
 		// Set unspecified checkboxes
 		if (empty($vars['sandbox']))
 			$vars['sandbox'] = "false";
-		
+
     $vars["registrar"]= "Ptisp";
     $vars["sandbox"]= "false";
 		$this->Input->setRules($this->getRowRules($vars));
-		
+
 		// Validate module row
 		if ($this->Input->validates($vars)) {
 
 			// Build the meta data for this row
 			$meta = array();
 			foreach ($vars as $key => $value) {
-				
+
 				if (in_array($key, $meta_fields)) {
 					$meta[] = array(
 						'key' => $key,
@@ -658,11 +658,11 @@ class PTisp extends Module {
 					);
 				}
 			}
-			
+
 			return $meta;
 		}
 	}
-	
+
 	/**
 	 * Edits the module row on the remote server. Sets Input errors on failure,
 	 * preventing the row from being updated.
@@ -678,7 +678,7 @@ class PTisp extends Module {
 		// Same as adding
 		return $this->addModuleRow($vars);
 	}
-	
+
 	/**
 	 * Deletes the module row on the remote server. Sets Input errors on failure,
 	 * preventing the row from being deleted.
@@ -686,9 +686,9 @@ class PTisp extends Module {
 	 * @param stdClass $module_row The stdClass representation of the existing module row
 	 */
 	public function deleteModuleRow($module_row) {
-		
+
 	}
-	
+
 	/**
 	 * Returns all fields used when adding/editing a package, including any
 	 * javascript to execute when the page is rendered with these fields.
@@ -698,23 +698,23 @@ class PTisp extends Module {
 	 */
 	public function getPackageFields($vars=null) {
 		Loader::loadHelpers($this, array("Html"));
-		
+
 		$fields = new ModuleFields();
-		
+
 		$types = array(
 			'domain' => Language::_("PTisp.package_fields.type_domain", true),
 			//'ssl' => Language::_("PTisp.package_fields.type_ssl", true)
 		);
-		
+
 		// Set type of package
 		$type = $fields->label(Language::_("PTisp.package_fields.type", true), "ptisp_type");
 		$type->attach($fields->fieldSelect("meta[type]", $types,
 			$this->Html->ifSet($vars->meta['type']), array('id'=>"ptisp_type")));
-		$fields->setField($type);	
-		
+		$fields->setField($type);
+
 		// Set all TLD checkboxes
         $tld_options = $fields->label(Language::_("PTisp.package_fields.tld_options", true));
-		
+
 		$tlds = Configure::get("PTisp.tlds");
 		sort($tlds);
 		foreach ($tlds as $tld) {
@@ -722,25 +722,25 @@ class PTisp extends Module {
 			$tld_options->attach($fields->fieldCheckbox("meta[tlds][]", $tld, (isset($vars->meta['tlds']) && in_array($tld, $vars->meta['tlds'])), array('id' => "tld_" . $tld), $tld_label));
 		}
 		$fields->setField($tld_options);
-		
+
 		// Set nameservers
 		for ($i=1; $i<=4; $i++) {
 			$type = $fields->label(Language::_("PTisp.package_fields.ns" . $i, true), "ptisp_ns" . $i);
 			$type->attach($fields->fieldText("meta[ns][]",
 				$this->Html->ifSet($vars->meta['ns'][$i-1]), array('id'=>"ptisp_ns" . $i)));
 			$fields->setField($type);
-		}		
-		
+		}
+
 		$fields->setHtml("
 			<script type=\"text/javascript\">
 				$(document).ready(function() {
 					toggleTldOptions($('#logicboxes_type').val());
-				
+
 					// Re-fetch module options to toggle fields
 					$('#logicboxes_type').change(function() {
 						toggleTldOptions($(this).val());
 					});
-					
+
 					function toggleTldOptions(type) {
 						if (type == 'ssl')
 							$('.logicboxes_tlds').hide();
@@ -750,10 +750,10 @@ class PTisp extends Module {
 				});
 			</script>
 		");
-		
+
 		return $fields;
 	}
-	
+
 	/**
 	 * Returns an array of key values for fields stored for a module, package,
 	 * and service under this module, used to substitute those keys with their
@@ -779,11 +779,11 @@ class PTisp extends Module {
 	 * @return ModuleFields A ModuleFields object, containg the fields to render as well as any additional HTML markup to include
 	 */
 	public function getAdminAddFields($package, $vars=null) {
-		
+
 		// Handle universal domain name
 		if (isset($vars->domain))
 			$vars->{'domain-name'} = $vars->domain;
-			
+
 		if ($package->meta->type == "domain") {
 			// Set default name servers
 			if (!isset($vars->ns1) && isset($package->meta->ns)) {
@@ -792,26 +792,26 @@ class PTisp extends Module {
 					$vars->{"ns" . $i++} = $ns;
 				}
 			}
-		
+
 			// Handle transfer request
 			if (isset($vars->transfer) || isset($vars->{'auth-code'})) {
 				return $this->arrayToModuleFields(Configure::get("PTisp.transfer_fields"), null, $vars);
 			}
 			// Handle domain registration
 			else {
-				
+
 				$module_fields = $this->arrayToModuleFields(array_merge(Configure::get("PTisp.domain_fields"), Configure::get("PTisp.nameserver_fields")), null, $vars);
-				
+
 				if (isset($vars->{'domain-name'})) {
 					$tld = $this->getTld($vars->{'domain-name'});
-					
+
 					if ($tld) {
 						$extension_fields = array_merge((array)Configure::get("PTisp.domain_fields" . $tld), (array)Configure::get("PTisp.contact_fields" . $tld));
 						if ($extension_fields)
 							$module_fields = $this->arrayToModuleFields($extension_fields, $module_fields, $vars);
 					}
 				}
-				
+
 				return $module_fields;
 			}
 		}
@@ -819,20 +819,20 @@ class PTisp extends Module {
 			return new ModuleFields();
 		}
 	}
-	
+
 	/**
 	 * Returns all fields to display to a client attempting to add a service with the module
 	 *
 	 * @param stdClass $package A stdClass object representing the selected package
 	 * @param $vars stdClass A stdClass object representing a set of post fields
 	 * @return ModuleFields A ModuleFields object, containg the fields to render as well as any additional HTML markup to include
-	 */	
+	 */
 	public function getClientAddFields($package, $vars=null) {
-		
+
 		// Handle universal domain name
 		if (isset($vars->domain))
 			$vars->{'domain-name'} = $vars->domain;
-		
+
 		if ($package->meta->type == "domain") {
 
 			// Set default name servers
@@ -844,39 +844,39 @@ class PTisp extends Module {
 			}
 
 			$tld = (property_exists($vars, "domain-name") ? $this->getTld($vars->{'domain-name'}, true) : null);
-			
+
 			// Handle transfer request
 			if (isset($vars->transfer) || isset($vars->{'auth-code'})) {
 				$fields = Configure::get("PTisp.transfer_fields");
-				
+
 				// We should already have the domain name don't make editable
 				$fields['domain-name']['type'] = "hidden";
 				$fields['domain-name']['label'] = null;
-				
+
 				$module_fields = $this->arrayToModuleFields($fields, null, $vars);
-				
+
 				$extension_fields = Configure::get("PTisp.contact_fields" . $tld);
 				if ($extension_fields)
 					$module_fields = $this->arrayToModuleFields($extension_fields, $module_fields, $vars);
-					
+
 				return $module_fields;
 			}
 			// Handle domain registration
 			else {
 				$fields = array_merge(Configure::get("PTisp.nameserver_fields"), Configure::get("PTisp.domain_fields"));
-				
+
 				// We should already have the domain name don't make editable
 				$fields['domain-name']['type'] = "hidden";
 				$fields['domain-name']['label'] = null;
-				
+
 				$module_fields = $this->arrayToModuleFields($fields, null, $vars);
-				
+
 				if (isset($vars->{'domain-name'})) {
 					$extension_fields = array_merge((array)Configure::get("PTisp.domain_fields" . $tld), (array)Configure::get("PTisp.contact_fields" . $tld));
 					if ($extension_fields)
 						$module_fields = $this->arrayToModuleFields($extension_fields, $module_fields, $vars);
 				}
-				
+
 				return $module_fields;
 			}
 		}
@@ -884,14 +884,14 @@ class PTisp extends Module {
 			return new ModuleFields();
 		}
 	}
-	
+
 	/**
 	 * Returns all fields to display to an admin attempting to edit a service with the module
 	 *
 	 * @param stdClass $package A stdClass object representing the selected package
 	 * @param $vars stdClass A stdClass object representing a set of post fields
 	 * @return ModuleFields A ModuleFields object, containg the fields to render as well as any additional HTML markup to include
-	 */	
+	 */
 	public function getAdminEditFields($package, $vars=null) {
 		if ($package->meta->type == "domain") {
 			return new ModuleFields();
@@ -900,7 +900,7 @@ class PTisp extends Module {
 			return new ModuleFields();
 		}
 	}
-	
+
 	/**
 	 * Fetches the HTML content to display when viewing the service info in the
 	 * admin interface.
@@ -912,7 +912,7 @@ class PTisp extends Module {
 	public function getAdminServiceInfo($service, $package) {
 		return "";
 	}
-	
+
 	/**
 	 * Fetches the HTML content to display when viewing the service info in the
 	 * client interface.
@@ -924,7 +924,7 @@ class PTisp extends Module {
 	public function getClientServiceInfo($service, $package) {
 		return "";
 	}
-	
+
 	/**
 	 * Returns all tabs to display to an admin when managing a service whose
 	 * package uses this module
@@ -966,7 +966,7 @@ class PTisp extends Module {
 			#
 		}
 	}
-	
+
 	/**
 	 * Admin Whois tab
 	 *
@@ -980,7 +980,7 @@ class PTisp extends Module {
 	public function tabWhois($package, $service, array $get=null, array $post=null, array $files=null) {
 		return null;
 	}
-	
+
 	/**
 	 * Client Whois tab
 	 *
@@ -994,7 +994,7 @@ class PTisp extends Module {
 	public function tabClientWhois($package, $service, array $get=null, array $post=null, array $files=null) {
 		return null;
 	}
-	
+
 	/**
 	 * Admin Nameservers tab
 	 *
@@ -1005,10 +1005,11 @@ class PTisp extends Module {
 	 * @param array $files Any FILES parameters
 	 * @return string The string representing the contents of this tab
 	 */
-	public function tabNameservers($package, $service, array $get=null, array $post=null, array $files=null) {
+	public function tabNameservers($package, $service, array $get=null, array $post=null, array $files=null) 	{
+
 		return $this->manageNameservers("tab_nameservers", $package, $service, $get, $post, $files);
 	}
-	
+
 	/**
 	 * Admin Nameservers tab
 	 *
@@ -1020,9 +1021,10 @@ class PTisp extends Module {
 	 * @return string The string representing the contents of this tab
 	 */
 	public function tabClientNameservers($package, $service, array $get=null, array $post=null, array $files=null) {
+
 		return $this->manageNameservers("tab_client_nameservers", $package, $service, $get, $post, $files);
 	}
-	
+
 	/**
 	 * Admin Settings tab
 	 *
@@ -1036,7 +1038,7 @@ class PTisp extends Module {
 	public function tabSettings($package, $service, array $get=null, array $post=null, array $files=null) {
 		return $this->manageSettings("tab_settings", $package, $service, $get, $post, $files);
 	}
-	
+
 	/**
 	 * Client Settings tab
 	 *
@@ -1050,7 +1052,7 @@ class PTisp extends Module {
 	public function tabClientSettings($package, $service, array $get=null, array $post=null, array $files=null) {
 		return $this->manageSettings("tab_client_settings", $package, $service, $get, $post, $files);
 	}
-	
+
 	/**
 	 * Handle updating nameserver information
 	 *
@@ -1064,8 +1066,16 @@ class PTisp extends Module {
 	 */
 	private function manageNameservers($view, $package, $service, array $get=null, array $post=null, array $files=null) {
 		$vars = new stdClass();
-		
+
+		$row = $this->getModuleRow($package->module_row);
+		$username = $row->meta->reseller_id;
+		$password = $row->meta->key;
+
+
+		$fields = $this->serviceFieldsToObject($service->fields);
+
     $domain = $fields->{'domain-name'};
+
 
     $request = new RestRequest("https://api.ptisp.pt/domains/" . $domain . "/info", "GET");
     $request->setUsername($username);
@@ -1079,20 +1089,34 @@ class PTisp extends Module {
       $vars->ns[] = array();
       $show_content = false;
     } else {
-      $vars->ns[] = $result["data"]["ns"];
+
+				//$vars->ns[0] = $result["data"]["ns"][0];
+				if (isset($result["data"]["ns"][0])) {
+					$vars->ns[0] = $result["data"]["ns"][0];
+				}
+				if (isset($result["data"]["ns"][1])) {
+					$vars->ns[1] = $result["data"]["ns"][1];
+				}
+				if (isset($result["data"]["ns"][2])) {
+					$vars->ns[2] = $result["data"]["ns"][2];
+				}
+				if (isset($result["data"]["ns"][3])) {
+					$vars->ns[3] = $result["data"]["ns"][3];
+				}
     }
-		
+
+
 		$view = ($show_content ? $view : "tab_unavailable");
 		$this->view = new View($view, "default");
-		
+
 		// Load the helpers required for this view
 		Loader::loadHelpers($this, array("Form", "Html"));
-		
+
 		$this->view->set("vars", $vars);
 		$this->view->setDefaultView("components" . DS . "modules" . DS . "ptisp" . DS);
 		return $this->view->fetch();
 	}
-	
+
 	/**
 	 * Handle updating settings
 	 *
@@ -1106,63 +1130,41 @@ class PTisp extends Module {
 	 */
 	private function manageSettings($view, $package, $service, array $get=null, array $post=null, array $files=null) {
 		$vars = new stdClass();
-		
+
 		$row = $this->getModuleRow($package->module_row);
-		$api = $this->getApi($row->meta->reseller_id, $row->meta->key, $row->meta->sandbox == "true");
-		$api->loadCommand("logicboxes_domains");
-		$domains = new LogicboxesDomains($api);
-		
+
+
 		$fields = $this->serviceFieldsToObject($service->fields);
 		$show_content = true;
-		
+
 		if (property_exists($fields, "order-id")) {
 			if (!empty($post)) {
-				
+
 				if (isset($post['registrar_lock'])) {
 					if ($post['registrar_lock'] == "true") {
-						$response = $domains->enableTheftProtection(array(
-							'order-id' => $fields->{'order-id'},
-						));
+						//DOMAIN LOCK
 					}
-					else {
-						$response = $domains->disableTheftProtection(array(
-							'order-id' => $fields->{'order-id'},
-						));
-					}
-					$this->processResponse($api, $response);
 				}
-				
+
 				$vars = (object)$post;
-			}
-			else {
-				
-				$response = $domains->details(array('order-id' => $fields->{'order-id'}, 'options' => array("OrderDetails")))->response();
-				
-				if ($response) {
-					$vars->registrar_lock = "false";
-					if (in_array("transferlock", $response->orderstatus))
-						$vars->registrar_lock = "true";
-						
-					$vars->epp_code = $response->domsecret;
-				}
 			}
 		}
 		else {
 			// No order-id; info is not available
 			$show_content = false;
 		}
-		
+
 		$view = ($show_content ? $view : "tab_unavailable");
 		$this->view = new View($view, "default");
-		
+
 		// Load the helpers required for this view
 		Loader::loadHelpers($this, array("Form", "Html"));
-		
+
 		$this->view->set("vars", $vars);
 		$this->view->setDefaultView("components" . DS . "modules" . DS . "ptisp" . DS);
 		return $this->view->fetch();
 	}
-	
+
 	/**
 	 * Creates a contact
 	 *
@@ -1171,19 +1173,19 @@ class PTisp extends Module {
 	 * @return int The contact-id created, null otherwise
 	 * @see LogicboxesContacts::add()
 	 */
-	private function createContact($domain, $vars) {
+	private function createContact($domain, $vars, $username, $password) {
 		$request = new RestRequest("https://api.ptisp.pt/domains/" . $domain . "/contacts/create", "POST");
     $request->setUsername($username);
     $request->setPassword($password);
 
     $request->execute($vars);
     $result = json_decode($request->getResponseBody(), true);
-		
+
 		if (!$this->Input->errors() && $result["result"] == "ok" )
 			return $result["nichandle"];
 		return null;
 	}
-	
+
 	/**
 	 * Fetches the logicboxes customer ID based on username
 	 *
@@ -1193,20 +1195,25 @@ class PTisp extends Module {
 	 */
 	private function getCustomerId($module_row_id, $username) {
 		$row = $this->getModuleRow($module_row_id);
-		$api = $this->getApi($row->meta->reseller_id, $row->meta->key, $row->meta->sandbox == "true");
-		$api->loadCommand("logicboxes_customers");
-		$customers = new LogicboxesCustomers($api);
-		
-		$vars = array('username' => $username, 'no-of-records' => 10, 'page-no' => 1);
-		$response = $customers->search($vars);
-		
-		$this->processResponse($api, $response);
-		
-		if (isset($response->response()->{'1'}->{'customer.customerid'}))
-			return $response->response()->{'1'}->{'customer.customerid'};
+		$username = $row->meta->reseller_id;
+		$password = $row->meta->key;
+
+		$request = new RestRequest("https://api.ptisp.pt/user/info", "GET");
+		$request->setUsername($username);
+		$request->setPassword($password);
+		$request->execute();
+		$show_content = true;
+
+		$result = json_decode($request->getResponseBody(), true);
+
+		error_log($result["data"]["id"]);
+		if ($result["result"] != "ok") {
+			return 1;
+		}
 		return null;
+
 	}
-	
+
 	/**
 	 * Fetches a logicboxes contact ID of a given logicboxes customer ID
 	 *
@@ -1230,17 +1237,17 @@ class PTisp extends Module {
 		$api = $this->getApi($row->meta->reseller_id, $row->meta->key, $row->meta->sandbox == "true");
 		$api->loadCommand("logicboxes_contacts");
 		$contacts = new LogicboxesContacts($api);
-		
+
 		$vars = array('customer-id' => $customer_id, 'no-of-records' => 10, 'page-no' => 1, 'type' => $type);
 		$response = $contacts->search($vars);
-		
+
 		$this->processResponse($api, $response);
-		
+
 		if (isset($response->response()->{'1'}->{'entity.entitiyid'}))
 			return $response->response()->{'1'}->{'entity.entitiyid'};
 		return null;
 	}
-	
+
 	/**
 	 * Return the contact type required for the given TLD
 	 *
@@ -1256,7 +1263,7 @@ class PTisp extends Module {
 		}
 		return $type;
 	}
-	
+
 	/**
 	 * Create a so-called 'map' of attr-name and attr-value fields to cope with Logicboxes
 	 * ridiculous format requirements.
@@ -1266,7 +1273,7 @@ class PTisp extends Module {
 	 */
 	private function createMap($attr) {
 		$map = array();
-		
+
 		$i=1;
 		foreach ($attr as $key => $value) {
 			if (substr($key, 0, 5) == "attr_") {
@@ -1277,7 +1284,7 @@ class PTisp extends Module {
 		}
 		return $map;
 	}
-	
+
 	/**
 	 * Performs a whois lookup on the given domain
 	 *
@@ -1298,7 +1305,7 @@ class PTisp extends Module {
 
     return true;
 	}
-	
+
 	/**
 	 * Builds and returns the rules required to add/edit a module row
 	 *
@@ -1328,7 +1335,7 @@ class PTisp extends Module {
 			)
 		);
 	}
-	
+
 	/**
 	 * Validates that the given connection details are correct by attempting to check the availability of a domain
 	 *
@@ -1345,7 +1352,7 @@ class PTisp extends Module {
     */
 		return true;
 	}
-	
+
 	/**
 	 * Initializes the LogicboxesApi and returns an instance of that object
 	 *
@@ -1356,10 +1363,10 @@ class PTisp extends Module {
 	 */
 	private function getApi($reseller_id, $key, $sandbox) {
 		Loader::load(dirname(__FILE__) . DS . "apis" . DS . "RestRequest.inc.php");
-		
+
 		return null;
 	}
-	
+
 	/**
 	 * Process API response, setting an errors, and logging the request
 	 *
@@ -1368,7 +1375,7 @@ class PTisp extends Module {
 	 */
 	private function processResponse(LogicboxesApi $api, LogicboxesResponse $response) {
 		$this->logRequest($api, $response);
-		
+
 		// Set errors, if any
 		if ($response->status() != "OK") {
 			if (isset($response->errors()->message))
@@ -1378,7 +1385,7 @@ class PTisp extends Module {
 			$this->Input->setErrors(array('errors' => (array)$errors));
 		}
 	}
-	
+
 	/**
 	 * Logs the API request
 	 *
@@ -1387,17 +1394,17 @@ class PTisp extends Module {
 	 */
 	private function logRequest(LogicboxesApi $api, LogicboxesResponse $response) {
 		$last_request = $api->lastRequest();
-		
+
 		$masks = array("api-key");
 		foreach ($masks as $mask) {
 			if (isset($last_request['args'][$mask]))
 				$last_request['args'][$mask] = str_repeat("x", strlen($last_request['args'][$mask]));
 		}
-		
+
 		$this->log($last_request['url'], serialize($last_request['args']), "input", true);
 		$this->log($last_request['url'], $response->raw(), "output", $response->status() == "OK");
 	}
-	
+
 	/**
 	 * Returns the TLD of the given domain
 	 *
@@ -1407,9 +1414,9 @@ class PTisp extends Module {
 	 */
 	private function getTld($domain, $top = false) {
 		$tlds = Configure::get("PTisp.tlds");
-		
+
 		$domain = strtolower($domain);
-		
+
 		if (!$top) {
 			foreach ($tlds as $tld) {
 				if (substr($domain, -strlen($tld)) == $tld)
@@ -1418,7 +1425,7 @@ class PTisp extends Module {
 		}
 		return strrchr($domain, ".");
 	}
-	
+
 	/**
 	 * Formats a phone number into +NNN.NNNNNNNNNN
 	 *
@@ -1429,10 +1436,10 @@ class PTisp extends Module {
 	private function formatPhone($number, $country) {
 		if (!isset($this->Contacts))
 			Loader::loadModels($this, array("Contacts"));
-		
+
 		return $this->Contacts->intlNumber($number, $country, ".");
 	}
-	
+
 	/**
 	 * Formats the contact ID for the given TLD and type
 	 *

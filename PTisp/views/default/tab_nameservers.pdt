@@ -5,7 +5,7 @@
 	<div class="pad">
 		<ul>
 			<?php
-			for ($i=0; $i<5; $i++) {
+			for ($i=0; $i<4; $i++) {
 			?>
 			<li>
 				<?php
