@@ -5,7 +5,7 @@
 	<div class="row panel-fix">
 		<div class="col-md-12">
 			<?php
-			for ($i=0; $i<5; $i++) {
+			for ($i=0; $i<4; $i++) {
 			?>
 			<div class="form-group">
 				<?php

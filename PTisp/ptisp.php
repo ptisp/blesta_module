@@ -449,11 +449,15 @@ class PTisp extends Module {
 	 */
 	public function renewService($domain, $years, $parent_package=null, $parent_service=null) {
 
+		$row = $this->getModuleRow($package->module_row);
+		$username = $row->meta->reseller_id;
+		$password = $row->meta->key;
+
     $request = new RestRequest("https://api.ptisp.pt/domains/" . $domain . "/renew/" . $years, "POST");
     $request->setUsername($username);
     $request->setPassword($password);
 
-    $request->execute(array());
+    $request->execute();
     $result = json_decode($request->getResponseBody(), true);
 
     if ($result["result"] != "ok") {
@@ -1071,11 +1075,31 @@ class PTisp extends Module {
 		$username = $row->meta->reseller_id;
 		$password = $row->meta->key;
 
-
 		$fields = $this->serviceFieldsToObject($service->fields);
+		$domain = $fields->{'domain-name'};
 
-    $domain = $fields->{'domain-name'};
 
+		//Post change NS
+		if (isset($post["ns"][0]) && ($post["ns"][0] != "")) {
+			$ns = $post["ns"][0];
+			error_log($ns);
+			if (isset($post["ns"][1]) && ($post["ns"][1] != "")){
+					$ns .= "/" . $post["ns"][1];
+					error_log($ns);
+			}
+			if (isset($post["ns"][2]) && ($post["ns"][2] != "")){
+					$ns .= "/" . $post["ns"][2];
+					error_log($ns);
+			}
+			if (isset($post["ns"][3]) && ($post["ns"][3] != "")){
+					$ns .= "/" . $post["ns"][3];
+					error_log($ns);
+			}
+			$request = new RestRequest("https://api.ptisp.pt/domains/" . $domain . "/update/ns/" .$ns, "POST");
+			$request->setUsername($username);
+			$request->setPassword($password);
+			$request->execute(array());
+		}
 
     $request = new RestRequest("https://api.ptisp.pt/domains/" . $domain . "/info", "GET");
     $request->setUsername($username);
