@@ -3,15 +3,15 @@
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . "apis" . DIRECTORY_SEPARATOR . "RestRequest.inc.php";
 
 /**
- * Logicboxes Module
+ * PTisp Module
  *
  * @package blesta
- * @subpackage blesta.components.modules.logicboxes
+ * @subpackage blesta.components.modules.ptisp
  * @copyright Copyright (c) 2010, Phillips Data, Inc.
  * @license http://www.blesta.com/license/ The Blesta License Agreement
  * @link http://www.blesta.com/ Blesta
  */
-class PTisp extends Module {
+class Ptisp extends Module {
 
 	/**
 	 * @var string The version of this module
@@ -191,10 +191,7 @@ class PTisp extends Module {
 
 		if (isset($vars['use_module']) && $vars['use_module'] == "true") {
 			if ($package->meta->type == "domain") {
-        /*
-				$api->loadCommand("logicboxes_domains");
-				$domains = new LogicboxesDomains($api);
-				*/
+
 				$contact_type = $this->getContactType($tld);
 				$order_id = null;
 				$vars['years'] = 1;
@@ -214,46 +211,55 @@ class PTisp extends Module {
 				$customer_id = $this->getCustomerId($package->module_row, $client->email);
 				$contact_id = null;
 
+				if (!isset($this->Contacts))
+						Loader::loadModels($this, array("Contacts"));
+
+				$client = $this->Clients->get($vars['client_id']);
+				$numbers = $this->Contacts->getNumbers($client->contact_id, "phone");
+
 				foreach (array_merge($contact_fields, $customer_fields) as $key => $field) {
 					if ($key == "name")
 						$vars[$key] = $client->first_name . " " . $client->last_name;
 					elseif ($key == "company")
 						$vars[$key] = $client->company != "" ? $client->company : "Not Applicable";
-					elseif ($key == "email")
+					elseif ($key == "mail")
 						$vars[$key] = $client->email;
-					elseif ($key == "address-line-1")
+					elseif ($key == "vat")
+						$vars[$key] = $client->settings["tax_id"];
+					elseif ($key == "street")
 						$vars[$key] = $client->address1;
-					elseif ($key == "address-line-2")
-						$vars[$key] = $client->address2;
 					elseif ($key == "city")
 						$vars[$key] = $client->city;
 					elseif ($key == "state")
 						$vars[$key] = $client->state;
-					elseif ($key == "zipcode")
+					elseif ($key == "postalcode")
 						$vars[$key] = $client->zip;
 					elseif ($key == "country")
 						$vars[$key] = $client->country;
-					elseif ($key == "phone-cc") {
-						$part = explode(".", $this->formatPhone(isset($client->numbers[0]) ? $client->numbers[0]->number : null, $client->country));
-						if (count($part) == 2) {
-							$vars[$key] = ltrim($part[0], "+");
-							$vars['phone'] = $part[1] != "" ? $part[1] : "1111111";
-						}
+					elseif ($key == "phone") {
+							$vars[$key] = $this->formatPhone(isset($numbers[0]) ? $numbers[0]->number : null, $client->country);
 					}
-					elseif ($key == "username")
-						$vars[$key] = $client->email;
-					elseif ($key == "passwd")
-						$vars[$key] = substr(md5(mt_rand()), 0, 15);
-					elseif ($key == "lang-pref")
-						$vars[$key] = substr($client->settings['language'], 0, 2);
 				}
+
+				error_log($vars['phone']);
+
+
+
 
 				$vars['type'] = $contact_type;
 
 				$vars['customer-id'] = $customer_id;
+
+				//Create Contact Owner
+
+				//Create Contact Tech
+
+
+
+				$contact_id = $this->createContact($vars['domain-name'], $vars, $username, $password);
 				/*
 				$contact_id = $this->createContact($package->module_row, array_intersect_key($vars, array_merge($contact_fields, $domain_contact_fields)), $username, $password);
-				/*
+
 				$vars['reg-contact-id'] = $contact_id;
 				$contact_id = $this->createContact($package->module_row, array_intersect_key($vars, array_merge($contact_fields, $domain_contact_fields)));
 				$vars['admin-contact-id'] = $this->formatContact($contact_id, $tld, "admin");
@@ -266,6 +272,7 @@ class PTisp extends Module {
 				// Handle transfer
 				if (isset($vars['transfer']) || isset($vars['auth-code'])) {
           // transfer
+					/*
           $transfersecret = $vars['auth-code'];
 
           $request = new RestRequest("https://api.ptisp.pt/domains/" . $vars['domain-name'] . "/transfer/", "POST");
@@ -281,7 +288,7 @@ class PTisp extends Module {
           } else {
             //transfer ok
           }
-
+*/
           //$response = $domains->transfer(array_intersect_key($vars, $transfer_fields));
 				}
 				// Handle registration
@@ -294,6 +301,7 @@ class PTisp extends Module {
 					}
 
           //REGISTER
+					/*
 					$regperiod = 1;
           $request = new RestRequest("https://api.ptisp.pt/domains/" . $vars['domain-name'] . "/register/" . $regperiod, "POST");
           $request->setUsername($username);
@@ -307,7 +315,7 @@ class PTisp extends Module {
           } else {
             // registry ok
           }
-
+					*/
 					//$response = $domains->register(array_intersect_key($vars, $domain_fields));
 				}
         /*
@@ -738,18 +746,18 @@ class PTisp extends Module {
 		$fields->setHtml("
 			<script type=\"text/javascript\">
 				$(document).ready(function() {
-					toggleTldOptions($('#logicboxes_type').val());
+					toggleTldOptions($('#ptisp_type').val());
 
 					// Re-fetch module options to toggle fields
-					$('#logicboxes_type').change(function() {
+					$('#ptisp_type').change(function() {
 						toggleTldOptions($(this).val());
 					});
 
 					function toggleTldOptions(type) {
 						if (type == 'ssl')
-							$('.logicboxes_tlds').hide();
+							$('.ptisp_tlds').hide();
 						else
-							$('.logicboxes_tlds').show();
+							$('.ptisp_tlds').show();
 					}
 				});
 			</script>
@@ -1082,18 +1090,14 @@ class PTisp extends Module {
 		//Post change NS
 		if (isset($post["ns"][0]) && ($post["ns"][0] != "")) {
 			$ns = $post["ns"][0];
-			error_log($ns);
 			if (isset($post["ns"][1]) && ($post["ns"][1] != "")){
 					$ns .= "/" . $post["ns"][1];
-					error_log($ns);
 			}
 			if (isset($post["ns"][2]) && ($post["ns"][2] != "")){
 					$ns .= "/" . $post["ns"][2];
-					error_log($ns);
 			}
 			if (isset($post["ns"][3]) && ($post["ns"][3] != "")){
 					$ns .= "/" . $post["ns"][3];
-					error_log($ns);
 			}
 			$request = new RestRequest("https://api.ptisp.pt/domains/" . $domain . "/update/ns/" .$ns, "POST");
 			$request->setUsername($username);
@@ -1195,27 +1199,29 @@ class PTisp extends Module {
 	 * @param int $module_row_id The module row ID to add the contact under
 	 * @param array $vars An array of contact information
 	 * @return int The contact-id created, null otherwise
-	 * @see LogicboxesContacts::add()
 	 */
 	private function createContact($domain, $vars, $username, $password) {
+		error_log("aki");
+		error_log()
 		$request = new RestRequest("https://api.ptisp.pt/domains/" . $domain . "/contacts/create", "POST");
     $request->setUsername($username);
     $request->setPassword($password);
 
+		//print_r($vars);
     $request->execute($vars);
     $result = json_decode($request->getResponseBody(), true);
-
-		if (!$this->Input->errors() && $result["result"] == "ok" )
+		//!$this->Input->errors() &&
+		if ($result["result"] == "ok" )
 			return $result["nichandle"];
 		return null;
 	}
 
 	/**
-	 * Fetches the logicboxes customer ID based on username
+	 * Fetches the PTisp customer ID based on username
 	 *
 	 * @param int $module_row_id The module row ID to search on
 	 * @param string $username The customer username (should be an email address)
-	 * @return int The logicboxes customer-id if one exists, null otherwise
+	 * @return int The PTisp customer-id if one exists, null otherwise
 	 */
 	private function getCustomerId($module_row_id, $username) {
 		$row = $this->getModuleRow($module_row_id);
@@ -1230,7 +1236,6 @@ class PTisp extends Module {
 
 		$result = json_decode($request->getResponseBody(), true);
 
-		error_log($result["data"]["id"]);
 		if ($result["result"] != "ok") {
 			return 1;
 		}
@@ -1239,10 +1244,10 @@ class PTisp extends Module {
 	}
 
 	/**
-	 * Fetches a logicboxes contact ID of a given logicboxes customer ID
+	 * Fetches a contact ID of a given customer ID
 	 *
 	 * @param int $module_row_id The module row ID to search on
-	 * @param string $customer_id The logicboxes customer-id
+	 * @param string $customer_id The customer-id
 	 * @param string $type includes one of:
 	 * 	- Contact
 	 * 	- CoopContact
@@ -1254,21 +1259,10 @@ class PTisp extends Module {
 	 * 	- CaContact
 	 * 	- DeContact
 	 * 	- EsContact
-	 * @return int The logicboxes contact-id if one exists, null otherwise
+	 * @return
 	 */
 	private function getContactId($module_row_id, $customer_id, $type="Contact") {
-		$row = $this->getModuleRow($module_row_id);
-		$api = $this->getApi($row->meta->reseller_id, $row->meta->key, $row->meta->sandbox == "true");
-		$api->loadCommand("logicboxes_contacts");
-		$contacts = new LogicboxesContacts($api);
 
-		$vars = array('customer-id' => $customer_id, 'no-of-records' => 10, 'page-no' => 1, 'type' => $type);
-		$response = $contacts->search($vars);
-
-		$this->processResponse($api, $response);
-
-		if (isset($response->response()->{'1'}->{'entity.entitiyid'}))
-			return $response->response()->{'1'}->{'entity.entitiyid'};
 		return null;
 	}
 
@@ -1289,8 +1283,6 @@ class PTisp extends Module {
 	}
 
 	/**
-	 * Create a so-called 'map' of attr-name and attr-value fields to cope with Logicboxes
-	 * ridiculous format requirements.
 	 *
 	 * @param $attr array An array of key/value pairs
 	 * @retrun array An array of key/value pairs where each $attr[$key] becomes "attr-nameN" and "attr-valueN" whose values are $key and $attr[$key], respectively
@@ -1310,7 +1302,6 @@ class PTisp extends Module {
 	}
 
 	/**
-	 * Performs a whois lookup on the given domain
 	 *
 	 * @param string $domain The domain to lookup
 	 * @return boolean True if available, false otherwise
@@ -1369,21 +1360,14 @@ class PTisp extends Module {
 	 * @return boolean True if the connection details are valid, false otherwise
 	 */
 	public function validateConnection($key, $reseller_id, $sandbox) {
-    /*
-		$api = $this->getApi($reseller_id, $key, $sandbox == "true");
-		$api->loadCommand("logicboxes_domains");
-		$domains = new LogicboxesDomains($api);
-    */
+
 		return true;
 	}
 
 	/**
-	 * Initializes the LogicboxesApi and returns an instance of that object
-	 *
 	 * @param string $reseller_id The reseller ID to connect as
 	 * @param string $key The key to use when connecting
 	 * @param boolean $sandbox Whether or not to process in sandbox mode (for testing)
-	 * @return LogicboxesApi The LogicboxesApi instance
 	 */
 	private function getApi($reseller_id, $key, $sandbox) {
 		Loader::load(dirname(__FILE__) . DS . "apis" . DS . "RestRequest.inc.php");
@@ -1391,43 +1375,6 @@ class PTisp extends Module {
 		return null;
 	}
 
-	/**
-	 * Process API response, setting an errors, and logging the request
-	 *
-	 * @param LogicboxesApi $api The logicboxes API object
-	 * @param LogicboxesResponse $response The logicboxes API response object
-	 */
-	private function processResponse(LogicboxesApi $api, LogicboxesResponse $response) {
-		$this->logRequest($api, $response);
-
-		// Set errors, if any
-		if ($response->status() != "OK") {
-			if (isset($response->errors()->message))
-				$errors = $response->errors()->message;
-			elseif (isset($response->errors()->error))
-				$errors = $response->errors()->error;
-			$this->Input->setErrors(array('errors' => (array)$errors));
-		}
-	}
-
-	/**
-	 * Logs the API request
-	 *
-	 * @param LogicboxesApi $api The logicboxes API object
-	 * @param LogicboxesResponse $response The logicboxes API response object
-	 */
-	private function logRequest(LogicboxesApi $api, LogicboxesResponse $response) {
-		$last_request = $api->lastRequest();
-
-		$masks = array("api-key");
-		foreach ($masks as $mask) {
-			if (isset($last_request['args'][$mask]))
-				$last_request['args'][$mask] = str_repeat("x", strlen($last_request['args'][$mask]));
-		}
-
-		$this->log($last_request['url'], serialize($last_request['args']), "input", true);
-		$this->log($last_request['url'], $response->raw(), "output", $response->status() == "OK");
-	}
 
 	/**
 	 * Returns the TLD of the given domain
@@ -1458,6 +1405,7 @@ class PTisp extends Module {
 	 * @return string The number in +NNN.NNNNNNNNNN
 	 */
 	private function formatPhone($number, $country) {
+		error_log($number);
 		if (!isset($this->Contacts))
 			Loader::loadModels($this, array("Contacts"));
 

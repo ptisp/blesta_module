@@ -1,6 +1,6 @@
 <?php
 // Basics
-$lang['PTisp.name'] = "ptisp";
+$lang['PTisp.name'] = "PTisp";
 $lang['PTisp.module_row'] = "Account";
 $lang['PTisp.module_row_plural'] = "Accounts";
 
@@ -94,12 +94,13 @@ $lang['PTisp.contact.customer-id'] = "Customer ID";
 $lang['PTisp.contact.type'] = "Type";
 $lang['PTisp.contact.name'] = "Name";
 $lang['PTisp.contact.company'] = "Company";
-$lang['PTisp.contact.email'] = "Email";
-$lang['PTisp.contact.address-line-1'] = "Address 1";
+$lang['PTisp.contact.mail'] = "Email";
+$lang['PTisp.contact.vat'] = "VAT";
+$lang['PTisp.contact.street'] = "Address 1";
 $lang['PTisp.contact.address-line-2'] = "Address 2";
 $lang['PTisp.contact.city'] = "City";
 $lang['PTisp.contact.state'] = "State";
-$lang['PTisp.contact.zipcode'] = "Zip";
+$lang['PTisp.contact.postalcode'] = "Postal Code";
 $lang['PTisp.contact.country'] = "Country";
 $lang['PTisp.contact.phone-cc'] = "Phone Country Dialing Code";
 $lang['PTisp.contact.phone'] = "Phone Number";

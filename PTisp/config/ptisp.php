@@ -1,5 +1,5 @@
 <?php
-// All available TLDs (http://www.logicboxes.com/product_pricing#domain-resellers)
+//
 Configure::set("PTisp.tlds", array(
 	".com",
 	".net",
@@ -68,12 +68,16 @@ Configure::set("PTisp.contact_fields", array(
 		'label' => Language::_("PTisp.contact.company", true),
 		'type' => "text"
 	),
-	'email' => array(
-		'label' => Language::_("PTisp.contact.email", true),
+	'mail' => array(
+		'label' => Language::_("PTisp.contact.mail", true),
 		'type' => "text"
 	),
-	'address-line-1' => array(
-		'label' => Language::_("PTisp.contact.address-line-1", true),
+	'vat' => array(
+		'label' => Language::_("PTisp.contact.vat", true),
+		'type' => "text"
+	),
+	'street' => array(
+		'label' => Language::_("PTisp.contact.street", true),
 		'type' => "text"
 	),
 	'address-line-2' => array(
@@ -88,8 +92,8 @@ Configure::set("PTisp.contact_fields", array(
 		'label' => Language::_("PTisp.contact.state", true),
 		'type' => "text"
 	),
-	'zipcode' => array(
-		'label' => Language::_("PTisp.contact.zipcode", true),
+	'postalcode' => array(
+		'label' => Language::_("PTisp.contact.postalcode", true),
 		'type' => "text"
 	),
 	'country' => array(
@@ -127,80 +131,6 @@ Configure::set("PTisp.customer_fields", array(
 	'lang-pref' => array(
 		'label' => Language::_("PTisp.customer.lang-pref", true),
 		'type' => "text"
-	)
-));
-
-
-// .ASIA
-Configure::set("PTisp.contact_fields.asia", array(
-	'attr_locality' => array(
-		'type' => "hidden",
-		'options' => null
-	),
-	'attr_legalentitytype' => array(
-		'label' => Language::_("PTisp.contact.legalentitytype", true),
-		'type' => "select",
-		'options' => array(
-			'corporation' => Language::_("PTisp.contact.legalentitytype.corporation", true),
-			'cooperative' => Language::_("PTisp.contact.legalentitytype.cooperative", true),
-			'partnership' => Language::_("PTisp.contact.legalentitytype.partnership", true),
-			'government' => Language::_("PTisp.contact.legalentitytype.government", true),
-			'politicalParty' => Language::_("PTisp.contact.legalentitytype.politicalParty", true),
-			'society' => Language::_("PTisp.contact.legalentitytype.society", true),
-			'institution' => Language::_("PTisp.contact.legalentitytype.institution", true),
-			'naturalPerson' => Language::_("PTisp.contact.legalentitytype.naturalPerson", true)
-		)
-	),
-	'attr_identform' => array(
-		'label' => Language::_("PTisp.contact.identform", true),
-		'type' => "select",
-		'options' => array(
-			'certificate' => Language::_("PTisp.contact.identform.certificate", true),
-			'legislation' => Language::_("PTisp.contact.identform.legislation", true),
-			'societyRegistry' => Language::_("PTisp.contact.identform.societyRegistry", true),
-			'politicalPartyRegistry' => Language::_("PTisp.contact.identform.politicalPartyRegistry", true),
-			'passport' => Language::_("PTisp.contact.identform.passport", true)
-		)
-	),
-	'attr_identnumber' => array(
-		'label' => Language::_("PTisp.contact.identnumber", true),
-		'type' => "text"
-	)
-));
-
-// .CA
-Configure::set("PTisp.contact_fields.ca", array(
-	'attr_CPR' => array(
-		'label' => Language::_("PTisp.contact.CPR", true),
-		'type' => "select",
-		'options' => array(
-			'CCO' => Language::_("PTisp.contact.CPR.cco", true),
-			'CCT' => Language::_("PTisp.contact.CPR.cct", true),
-			'RES' => Language::_("PTisp.contact.CPR.res", true),
-			'GOV' => Language::_("PTisp.contact.CPR.gov", true),
-			'EDU' => Language::_("PTisp.contact.CPR.edu", true),
-			'ASS' => Language::_("PTisp.contact.CPR.ass", true),
-			'HOP' => Language::_("PTisp.contact.CPR.hop", true),
-			'PRT' => Language::_("PTisp.contact.CPR.prt", true),
-			'TDM' => Language::_("PTisp.contact.CPR.tdm", true),
-			'TRD' => Language::_("PTisp.contact.CPR.trd", true),
-			'PLT' => Language::_("PTisp.contact.CPR.plt", true),
-			'LAM' => Language::_("PTisp.contact.CPR.lam", true),
-			'TRS' => Language::_("PTisp.contact.CPR.trs", true),
-			'ABO' => Language::_("PTisp.contact.CPR.abo", true),
-			'INB' => Language::_("PTisp.contact.CPR.inb", true),
-			'LGR' => Language::_("PTisp.contact.CPR.lgr", true),
-			'OMK' => Language::_("PTisp.contact.CPR.omk", true),
-			'MAJ' => Language::_("PTisp.contact.CPR.maj", true)
-		)
-	),
-	'attr_AgreementVersion' => array(
-		'type' => "hidden",
-		'options' => "2.0"
-	),
-	'attr_AgreementValue' => array(
-		'type' => "hidden",
-		'options' => "y"
 	)
 ));
 
