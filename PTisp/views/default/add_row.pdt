@@ -22,7 +22,13 @@
             $this->Form->label($this->_("PTisp.row_meta.key", true), "key");
             $this->Form->fieldText("key", $this->Html->ifSet($vars->key), array('id' => "key"));
             ?>
-          </li>
+						</li>
+						<li>
+							<?php
+							$this->Form->label($this->_("PTisp.row_meta.epp", true), "epp");
+							$this->Form->fieldText("epp", $this->Html->ifSet($vars->epp), array('id' => "epp"));
+							?>
+						</li>
 				</ul>
 			</div>
 

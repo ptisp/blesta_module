@@ -1,22 +1,18 @@
 <?php
 
+//v0.0.1
+
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . "apis" . DIRECTORY_SEPARATOR . "RestRequest.inc.php";
 
 /**
  * PTisp Module
- *
- * @package blesta
- * @subpackage blesta.components.modules.ptisp
- * @copyright Copyright (c) 2010, Phillips Data, Inc.
- * @license http://www.blesta.com/license/ The Blesta License Agreement
- * @link http://www.blesta.com/ Blesta
  */
 class Ptisp extends Module {
 
 	/**
 	 * @var string The version of this module
 	 */
-	private static $version = "1.0.0";
+	private static $version = "0.0.1";
 	/**
 	 * @var string The authors of this module
 	 */
@@ -163,18 +159,11 @@ class Ptisp extends Module {
 	public function addService($package, array $vars=null, $parent_package=null, $parent_service=null, $status="pending") {
 
 		$row = $this->getModuleRow($package->module_row);
+		print_r($row->meta);
 		$username = $row->meta->reseller_id;
 		$password = $row->meta->key;
-		/*
-    $api = $this->getApi($row->meta->reseller_id, $row->meta->key, $row->meta->sandbox == "true");
+		$nic = $row->meta->epp;
 
-		#
-		# TODO: Handle validation checks
-		#
-
-		$tld = null;
-		$input_fields = array();
-		*/
 		if (isset($vars['domain-name']))
 			$tld = $this->getTld($vars['domain-name'], true);
 
@@ -203,7 +192,6 @@ class Ptisp extends Module {
 					}
 				}
 
-				// Set all whois info from client ($vars['client_id'])
 				if (!isset($this->Clients))
 					Loader::loadModels($this, array("Clients"));
 
@@ -241,55 +229,22 @@ class Ptisp extends Module {
 					}
 				}
 
-				error_log($vars['phone']);
-
-
-
 
 				$vars['type'] = $contact_type;
-
 				$vars['customer-id'] = $customer_id;
 
-				//Create Contact Owner
-
-				//Create Contact Tech
-
-
-
 				$contact_id = $this->createContact($vars['domain-name'], $vars, $username, $password);
-				/*
-				$contact_id = $this->createContact($package->module_row, array_intersect_key($vars, array_merge($contact_fields, $domain_contact_fields)), $username, $password);
 
-				$vars['reg-contact-id'] = $contact_id;
-				$contact_id = $this->createContact($package->module_row, array_intersect_key($vars, array_merge($contact_fields, $domain_contact_fields)));
-				$vars['admin-contact-id'] = $this->formatContact($contact_id, $tld, "admin");
-				$contact_id = $this->createContact($package->module_row, array_intersect_key($vars, array_merge($contact_fields, $domain_contact_fields)));
-				$vars['tech-contact-id'] = $this->formatContact($contact_id, $tld, "tech");
-				$contact_id = $this->createContact($package->module_row, array_intersect_key($vars, array_merge($contact_fields, $domain_contact_fields)));
-				$vars['billing-contact-id'] = $this->formatContact($contact_id, $tld, "billing");
-*/
+				if($contact_id == null)
+					return;
+
+				$var["contact"] = $contact_id;
+				$var["nichandle"] = $nic;
 
 				// Handle transfer
 				if (isset($vars['transfer']) || isset($vars['auth-code'])) {
           // transfer
-					/*
-          $transfersecret = $vars['auth-code'];
 
-          $request = new RestRequest("https://api.ptisp.pt/domains/" . $vars['domain-name'] . "/transfer/", "POST");
-          $request->setUsername($username);
-          $request->setPassword($password);
-
-          $request->execute(array("authcode" => $transfersecret));
-
-          $result = json_decode($request->getResponseBody(), true);
-
-          if ($result["result"] != "ok") {
-            //transfer failed
-          } else {
-            //transfer ok
-          }
-*/
-          //$response = $domains->transfer(array_intersect_key($vars, $transfer_fields));
 				}
 				// Handle registration
 				else {
@@ -301,50 +256,30 @@ class Ptisp extends Module {
 					}
 
           //REGISTER
-					/*
 					$regperiod = 1;
           $request = new RestRequest("https://api.ptisp.pt/domains/" . $vars['domain-name'] . "/register/" . $regperiod, "POST");
           $request->setUsername($username);
           $request->setPassword($password);
-          $request->execute();
+          $request->execute($var);
 
           $result = json_decode($request->getResponseBody(), true);
 
           if ($result["result"] != "ok") {
-            // registry failed
+						$this->Input->setRules($this->getDomRules($result));
+						$this->Input->validates($result);
           } else {
             // registry ok
+						return array(
+							array('key' => "domain-name", 'value' => $vars['domain-name'], 'encrypted' => 0),
+							array('key' => "order-id", 'value' => $order_id, 'encrypted' => 0)
+						);
           }
-					*/
-					//$response = $domains->register(array_intersect_key($vars, $domain_fields));
 				}
-        /*
-        TRATAMENTO DE ERRO
-				if (isset($response->response()->entityid))
-					$order_id = $response->response()->entityid;
 
-				$this->processResponse($api, $response);
 
-				if ($this->Input->errors())
-					return;
-				*/
-				return array(
-					array('key' => "domain-name", 'value' => $vars['domain-name'], 'encrypted' => 0),
-					array('key' => "order-id", 'value' => $order_id, 'encrypted' => 0)
-				);
 			}
-			/*
-      else {
-
-				#
-				# TODO: Create SSL cert
-				#
-			}
-      */
-		}
-		elseif ($status != "pending") {
+		} elseif ($status != "pending") {
 			if ($package->meta->type == "domain") {
-				// ?!?!?!?! TODO
         error_log(print_r("Satus pending", true));
 			}
 		}
@@ -361,6 +296,17 @@ class Ptisp extends Module {
 		}
 
 		return $meta;
+	}
+
+	private function getDomRules(&$result) {
+		return array(
+			'result' => array(
+				'valid' => array(
+					'rule' => array("compares", "==", "ok"),
+					'message' => $result["message"]
+				)
+			)
+		);
 	}
 
 	/**
@@ -644,7 +590,7 @@ class Ptisp extends Module {
 	 * 	- encrypted Whether or not this field should be encrypted (default 0, not encrypted)
 	 */
 	public function addModuleRow(array &$vars) {
-		$meta_fields = array("registrar", "reseller_id", "key", "sandbox");
+		$meta_fields = array("registrar", "reseller_id", "key", "epp", "sandbox");
 		$encrypted_fields = array("key");
 
 		// Set unspecified checkboxes
@@ -715,7 +661,6 @@ class Ptisp extends Module {
 
 		$types = array(
 			'domain' => Language::_("PTisp.package_fields.type_domain", true),
-			//'ssl' => Language::_("PTisp.package_fields.type_ssl", true)
 		);
 
 		// Set type of package
@@ -951,11 +896,6 @@ class Ptisp extends Module {
 				'tabSettings' => Language::_("PTisp.tab_settings.title", true)
 			);
 		}
-		else {
-			#
-			# TODO: Activate & uploads CSR, set field data, etc.
-			#
-		}
 	}
 
 	/**
@@ -971,11 +911,6 @@ class Ptisp extends Module {
 				'tabClientNameservers' => Language::_("PTisp.tab_nameservers.title", true),
 				'tabClientSettings' => Language::_("PTisp.tab_settings.title", true)
 			);
-		}
-		else {
-			#
-			# TODO: Activate & uploads CSR, set field data, etc.
-			#
 		}
 	}
 
@@ -1117,8 +1052,6 @@ class Ptisp extends Module {
       $vars->ns[] = array();
       $show_content = false;
     } else {
-
-				//$vars->ns[0] = $result["data"]["ns"][0];
 				if (isset($result["data"]["ns"][0])) {
 					$vars->ns[0] = $result["data"]["ns"][0];
 				}
@@ -1201,19 +1134,21 @@ class Ptisp extends Module {
 	 * @return int The contact-id created, null otherwise
 	 */
 	private function createContact($domain, $vars, $username, $password) {
-		error_log("aki");
-		error_log()
 		$request = new RestRequest("https://api.ptisp.pt/domains/" . $domain . "/contacts/create", "POST");
     $request->setUsername($username);
     $request->setPassword($password);
 
-		//print_r($vars);
     $request->execute($vars);
     $result = json_decode($request->getResponseBody(), true);
-		//!$this->Input->errors() &&
+
 		if ($result["result"] == "ok" )
 			return $result["nichandle"];
-		return null;
+		else{
+			$this->Input->setRules($this->getDomRules($result));
+			$this->Input->validates($result);
+
+			return null;
+		}
 	}
 
 	/**
@@ -1347,6 +1282,13 @@ class Ptisp extends Module {
 					'rule' => array(array($this, "validateConnection"), $vars['reseller_id'], isset($vars['sandbox']) ? $vars['sandbox'] : "false"),
 					'message' => Language::_("PTisp.!error.key.valid_connection", true)
 				)
+			),
+			'epp' => array(
+				'valid' => array(
+					'rule' => "isEmpty",
+					'negate' => true,
+					'message' => Language::_("PTisp.!error.epp.valid", true)
+				)
 			)
 		);
 	}
@@ -1405,7 +1347,6 @@ class Ptisp extends Module {
 	 * @return string The number in +NNN.NNNNNNNNNN
 	 */
 	private function formatPhone($number, $country) {
-		error_log($number);
 		if (!isset($this->Contacts))
 			Loader::loadModels($this, array("Contacts"));
 

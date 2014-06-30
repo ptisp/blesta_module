@@ -11,6 +11,7 @@ $lang['PTisp.manage.module_rows_heading.registrar'] = "Registrar Name";
 $lang['PTisp.manage.module_rows_heading.user'] = "API Key";
 $lang['PTisp.manage.module_rows_heading.reseller_id'] = "Reseller ID";
 $lang['PTisp.manage.module_rows_heading.key'] = "API Key";
+$lang['PTisp.manage.module_rows_heading.epp'] = "Nic-Handle";
 $lang['PTisp.manage.module_rows_heading.sandbox'] = "Sandbox";
 $lang['PTisp.manage.module_rows_heading.options'] = "Options";
 $lang['PTisp.manage.module_rows.edit'] = "Edit";
@@ -22,6 +23,7 @@ $lang['PTisp.manage.module_rows_no_results'] = "There are no accounts.";
 $lang['PTisp.row_meta.registrar'] = "Registrar Name";
 $lang['PTisp.row_meta.reseller_id'] = "Email";
 $lang['PTisp.row_meta.key'] = "API Hash";
+$lang['PTisp.row_meta.epp'] = "Reseller Nic-handle";
 $lang['PTisp.row_meta.sandbox'] = "Sandbox";
 $lang['PTisp.row_meta.sandbox_true'] = "Yes";
 $lang['PTisp.row_meta.sandbox_false'] = "No";
@@ -58,7 +60,7 @@ $lang['PTisp.tab_whois.section_billingcontact'] = "Billing";
 $lang['PTisp.tab_whois.field_submit'] = "Update Whois";
 
 $lang['PTisp.tab_nameservers.title'] = "Name Servers";
-$lang['PTisp.tab_nameserver.field_ns'] = "Name Server %1\$s"; // %1$s is the name server number
+$lang['PTisp.tab_nameserver.field_ns'] = "Name Server %1\$s";
 $lang['PTisp.tab_nameservers.field_submit'] = "Update Name Servers";
 
 $lang['PTisp.tab_settings.title'] = "Settings";
@@ -72,6 +74,7 @@ $lang['PTisp.tab_settings.field_submit'] = "Update Settings";
 $lang['PTisp.!error.registrar.valid'] = "Please enter a registrar name.";
 $lang['PTisp.!error.reseller_id.valid'] = "Please enter a reseller ID.";
 $lang['PTisp.!error.key.valid'] = "Please enter a key.";
+$lang['PTisp.!error.epp.valid'] = "Please enter nic-handle.";
 $lang['PTisp.!error.key.valid_connection'] = "The reseller ID and key combination appear to be invalid, or your PTisp account may not be configured to allow API access.";
 
 
@@ -111,12 +114,5 @@ $lang['PTisp.contact.fax'] = "Fax Number";
 $lang['PTisp.customer.username'] = "Username";
 $lang['PTisp.customer.passwd'] = "Password";
 $lang['PTisp.customer.lang-pref'] = "Language";
-
-
-// .EU domain fields
-$lang['PTisp.domain.EUAgreeWhoisPolicy'] = "Whois Policy";
-$lang['PTisp.domain.EUAgreeWhoisPolicy.yes'] = "I hereby agree that the Registry is entitled to transfer the data contained in this application to third parties(i) if ordered to do so by a public authority, carrying out its legitimate tasks; and (ii) upon demand of an ADR Provider as mentioned in section 16 of the Terms and Conditions which are published at www.eurid.eu; and (iii) as provided in Section 2 (WHOIS look-up facility) of the .eu Domain Name WHOIS Policy which is published at www.eurid.eu.";
-$lang['PTisp.domain.EUAgreeDeletePolicy'] = "Deleteion Rules";
-$lang['PTisp.domain.EUAgreeDeletePolicy.yes'] = "I agree and acknowledge to the special renewal and expiration terms set forth below for this domain name, including those terms set forth in the Registration Agreement. I understand that unless I have set this domain for autorenewal, this domain name must be explicitly renewed by the expiration date or the 20th of the month of expiration, whichever is sooner. (e.g. If the name expires on Sept 4th, 2008, then a manual renewal must be received by Sept 4th, 2008. If name expires on Sep 27th, 2008, the renewal request must be received prior to Sep 20th, 2008). If the name is not manually renewed or previously set to autorenew, a delete request will be issued by PTisp. When a delete request is issued, the name will remain fully functional in my account until expiration, but will no longer be renewable nor will I be able to make any modifications to the name. These terms are subject to change.";
 
 ?>
