@@ -12,7 +12,7 @@ class Ptisp extends Module {
 	/**
 	 * @var string The version of this module
 	 */
-	private static $version = "0.0.1";
+	private static $version = "1.0.0";
 	/**
 	 * @var string The authors of this module
 	 */
@@ -159,7 +159,7 @@ class Ptisp extends Module {
 	public function addService($package, array $vars=null, $parent_package=null, $parent_service=null, $status="pending") {
 
 		$row = $this->getModuleRow($package->module_row);
-		print_r($row->meta);
+
 		$username = $row->meta->reseller_id;
 		$password = $row->meta->key;
 		$nic = $row->meta->epp;
@@ -1134,6 +1134,10 @@ class Ptisp extends Module {
 	 * @return int The contact-id created, null otherwise
 	 */
 	private function createContact($domain, $vars, $username, $password) {
+		$row = $this->getModuleRow($module_row_id);
+		$username = $row->meta->reseller_id;
+		$password = $row->meta->key;
+
 		$request = new RestRequest("https://api.ptisp.pt/domains/" . $domain . "/contacts/create", "POST");
     $request->setUsername($username);
     $request->setPassword($password);
@@ -1242,6 +1246,10 @@ class Ptisp extends Module {
 	 * @return boolean True if available, false otherwise
 	 */
 	public function checkAvailability($domain) {
+		$row = $this->getModuleRow($package->module_row);
+		$username = $row->meta->reseller_id;
+		$password = $row->meta->key;
+
     $request = new RestRequest("https://api.ptisp.pt/domains/" . $domain . "/check", "GET");
     $request->setUsername($username);
     $request->setPassword($password);
